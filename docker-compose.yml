@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: db_crud
+      POSTGRES_USER: user_crud
+      POSTGRES_PASSWORD: root
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"

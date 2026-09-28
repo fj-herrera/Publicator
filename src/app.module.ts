@@ -8,6 +8,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientModule } from './client/client.module.js';
 import { ContextModule } from './context/context.module.js';
 import { TextModule } from './text/text.module.js';
+import { TagModule } from './tag/tag.module.js';
+import { SkillModule } from './skill/skill.module.js';
+import { UrlModule } from './url/url.module.js';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { TextModule } from './text/text.module.js';
     ClientModule,
     ContextModule,
     TextModule,
+    TagModule,
+    SkillModule,
+    UrlModule,
   ],
 
   controllers: [AppController],

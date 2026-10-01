@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-
-import { TypeModule } from './type/type.module.js';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClientModule } from './client/client.module.js';
-import { ContextModule } from './context/context.module.js';
-import { TextModule } from './text/text.module.js';
-import { TagModule } from './tag/tag.module.js';
-import { SkillModule } from './skill/skill.module.js';
-import { UrlModule } from './url/url.module.js';
+import { TypeModule } from './modules/type/type.module.js';
 
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ClientModule } from './modules/client/client.module.js';
+import { ContextModule } from './modules/context/context.module.js';
+import { TextModule } from './modules/text/text.module.js';
+import { TagModule } from './modules/tag/tag.module.js';
+import { SkillModule } from './modules/skill/skill.module.js';
+import { DimensionsModule } from './modules/dimensions/dimensions.module.js';
+import { MetaModule } from './modules/meta/meta.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -38,7 +38,8 @@ import { UrlModule } from './url/url.module.js';
     TextModule,
     TagModule,
     SkillModule,
-    UrlModule,
+    DimensionsModule,
+    MetaModule,
   ],
 
   controllers: [AppController],

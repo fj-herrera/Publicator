@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 
 @Entity()
 export class Client {
@@ -12,4 +12,6 @@ export class Client {
         nullable: false,
     })
     name: string;
+
+
 }

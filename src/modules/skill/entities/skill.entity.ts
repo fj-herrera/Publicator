@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
-    export class Skill {
+export class Skill {
     @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
     id: number;
 
@@ -11,5 +11,11 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
         nullable: false,
     })
     name: string;
+
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
+    icon: string | null;
 }
 

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -83,6 +84,10 @@ export class MetaService {
     id: number,
     updateMetaDto: UpdateMetaDto,
   ): Promise<Meta> {
+    if (Object.keys(updateMetaDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const meta = await this.metaRepository.findOneBy({ id });
 
     if (!meta) {

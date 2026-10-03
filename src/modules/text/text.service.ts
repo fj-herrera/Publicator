@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTextDto } from './dto/create-text.dto.js';
 import { UpdateTextDto } from './dto/update-text.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,9 +12,9 @@ export class TextService {
     private readonly textRepository: Repository<Text>,
   ) {}
 
-  async create(text: string): Promise<Text> {
+  async create(createTextDto: CreateTextDto): Promise<Text> {
     try {
-      const newText = this.textRepository.create({ text });
+      const newText = this.textRepository.create(createTextDto);
 
       return await this.textRepository.save(newText);
     } catch (error) {
@@ -24,7 +24,7 @@ export class TextService {
         error.code === '23505'
       ) {
         throw new ConflictException(
-          `Text with content "${text}" already exists`,
+          `Text with content "${createTextDto.text}" already exists`,
         );
       }
 
@@ -47,6 +47,10 @@ export class TextService {
   }
 
   async update(id: number, updateTextDto: UpdateTextDto): Promise<Text> {
+    if (Object.keys(updateTextDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const text = await this.textRepository.findOneBy({ id });
 
     if (!text) {

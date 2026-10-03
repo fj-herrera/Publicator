@@ -18,7 +18,7 @@ export class TextController {
 
   @Post()
   create(@Body() createTextDto: CreateTextDto) {
-    return this.textService.create(createTextDto.text);
+    return this.textService.create(createTextDto);
   }
 
   @Get()

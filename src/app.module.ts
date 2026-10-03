@@ -12,6 +12,18 @@ import { TagModule } from './modules/tag/tag.module.js';
 import { SkillModule } from './modules/skill/skill.module.js';
 import { DimensionsModule } from './modules/dimensions/dimensions.module.js';
 import { MetaModule } from './modules/meta/meta.module.js';
+import { PublicationModule } from './modules/publication/publication.module.js';
+import { ContentModule } from './modules/content/content.module.js';
+import { CollectionModule } from './modules/collection/collection.module.js';
+import { SkillsModule } from './modules/skills/skills.module.js';
+import { SkillGroupModule } from './modules/skill-group/skill-group.module.js';
+import { PublicationTagModule } from './modules/publication-tag/publication-tag.module.js';
+import { AssetModule } from './modules/asset/asset.module.js';
+import { AssetCollectionModule } from './modules/asset-collection/asset-collection.module.js';
+import { AssetTextModule } from './modules/asset-text/asset-text.module.js';
+import { PublicationContextModule } from './modules/publication-context/publication-context.module.js';
+import { TextContentModule } from './modules/text-content/text-content.module.js';
+import { PublicationAssetModule } from './modules/publication-asset/publication-asset.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -40,6 +52,18 @@ import { MetaModule } from './modules/meta/meta.module.js';
     SkillModule,
     DimensionsModule,
     MetaModule,
+    PublicationModule,
+    ContentModule,
+    CollectionModule,
+    SkillsModule,
+    SkillGroupModule,
+    PublicationTagModule,
+    AssetModule,
+    AssetCollectionModule,
+    AssetTextModule,
+    PublicationContextModule,
+    TextContentModule,
+    PublicationAssetModule,
   ],
 
   controllers: [AppController],

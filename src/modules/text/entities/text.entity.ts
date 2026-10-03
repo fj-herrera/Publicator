@@ -1,7 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Check, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+export type TextFormat = 'PLAIN' | 'MD';
 
 @Entity()
-    export class Text {
+@Check('CHK_text_format', '"format" IN (\'PLAIN\', \'MD\')')
+export class Text {
     @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
     id: number;
 
@@ -10,4 +13,10 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
         nullable: false,
     })
     text: string;
+
+    @Column({
+        type: 'varchar',
+        nullable: false,
+    })
+    format: TextFormat;
 }

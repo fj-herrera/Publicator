@@ -18,7 +18,7 @@ export class SkillController {
 
   @Post()
   create(@Body() createSkillDto: CreateSkillDto) {
-    return this.skillService.create(createSkillDto.name);
+    return this.skillService.create(createSkillDto);
   }
 
   @Get()

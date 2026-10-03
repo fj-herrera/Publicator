@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, Type } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException, Type } from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto.js';
 import { UpdateClientDto } from './dto/update-client.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -49,6 +49,10 @@ export class ClientService {
 
 
   async update(id: number, updateClientDto: UpdateClientDto): Promise<Client> {
+    if (Object.keys(updateClientDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const client = await this.clientRepository.findOneBy({ id });
 
     if (!client) {

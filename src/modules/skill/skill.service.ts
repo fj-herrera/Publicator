@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto.js';
 import { UpdateSkillDto } from './dto/update-skill.dto.js';
@@ -13,9 +13,9 @@ export class SkillService {
     private readonly skillRepository: Repository<Skill>,
   ) {}
 
-  async create(name: string): Promise<Skill> {
+  async create(createSkillDto: CreateSkillDto): Promise<Skill> {
     try {
-      const skill = this.skillRepository.create({ name });
+      const skill = this.skillRepository.create(createSkillDto);
 
       return await this.skillRepository.save(skill);
     } catch (error) {
@@ -25,7 +25,7 @@ export class SkillService {
         error.code === '23505'
       ) {
         throw new ConflictException(
-          `Skill with name "${name}" already exists`,
+          `Skill with name "${createSkillDto.name}" already exists`,
         );
       }
 
@@ -48,6 +48,10 @@ export class SkillService {
   }
 
   async update(id: number, updateSkillDto: UpdateSkillDto): Promise<Skill> {
+    if (Object.keys(updateSkillDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const skill = await this.skillRepository.findOneBy({ id });
 
     if (!skill) {

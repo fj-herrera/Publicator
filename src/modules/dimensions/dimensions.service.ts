@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -56,6 +57,10 @@ export class DimensionsService {
     id: number,
     updateDimensionsDto: UpdateDimensionsDto,
   ): Promise<Dimensions> {
+    if (Object.keys(updateDimensionsDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const dimensions = await this.dimensionsRepository.findOneBy({ id });
 
     if (!dimensions) {

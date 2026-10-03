@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateTypeDto } from './dto/create-type.dto.js';
 import { UpdateTypeDto } from './dto/update-type.dto.js';
@@ -48,6 +48,10 @@ export class TypeService {
   }
 
   async update(id: number, updateTypeDto: UpdateTypeDto): Promise<Type> {
+    if (Object.keys(updateTypeDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const type = await this.typeRepository.findOneBy({ id });
 
     if (!type) {

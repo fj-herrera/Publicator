@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateTagDto } from './dto/create-tag.dto.js';
 import { UpdateTagDto } from './dto/update-tag.dto.js';
@@ -48,6 +48,10 @@ export class TagService {
   }
 
   async update(id: number, updateTagDto: UpdateTagDto): Promise<Tag> {
+    if (Object.keys(updateTagDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const tag = await this.tagRepository.findOneBy({ id });
 
     if (!tag) {

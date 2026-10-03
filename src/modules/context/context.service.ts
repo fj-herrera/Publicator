@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateContextDto } from './dto/create-context.dto.js';
 import { UpdateContextDto } from './dto/update-context.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,6 +47,10 @@ export class ContextService {
   }
 
   async update(id: number, updateContextDto: UpdateContextDto): Promise<Context> {
+    if (Object.keys(updateContextDto).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
     const context = await this.contextRepository.findOneBy({ id });
 
     if (!context) {

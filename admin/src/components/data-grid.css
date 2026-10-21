@@ -1,0 +1,85 @@
+.data-grid-container {
+  width: 100%;
+  background-color: #fff;
+}
+
+.data-grid-container .MuiTableContainer-root {
+  overflow-x: auto;
+  background-color: #fff;
+}
+
+.data-grid {
+  min-width: 400px;
+  background-color: #fff;
+}
+
+.data-grid .MuiTableRow-root {
+  height: 42px;
+}
+
+.data-grid .MuiTableCell-root {
+  box-sizing: border-box;
+  height: 42px;
+  min-width: 148px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e5e4e7;
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-grid .data-grid-name-column {
+  width: 168px;
+}
+
+.data-grid .data-grid-publications-column {
+  width: 172px;
+}
+
+.data-grid .MuiTableCell-head {
+  background-color: #fff;
+  border-top: 1px solid #e5e4e7;
+  font-weight: 700;
+}
+
+.data-grid .MuiTableCell-head:not(:last-child) {
+  border-right: 1px solid #e5e4e7;
+}
+
+.data-grid .data-grid-selectable-row {
+  cursor: pointer;
+}
+
+.data-grid .data-grid-selectable-row.Mui-selected,
+.data-grid .data-grid-selectable-row.Mui-selected:hover {
+  background-color: #e3f2fd;
+}
+
+.data-grid .data-grid-empty {
+  height: 42px;
+  color: #6b6375;
+  text-align: center;
+}
+
+.data-grid-actions-column {
+  width: auto;
+}
+
+.data-grid-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.data-grid-actions svg {
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+}
+
+.data-grid-pagination {
+  border-top: 1px solid #e5e4e7;
+  background-color: #fff;
+}

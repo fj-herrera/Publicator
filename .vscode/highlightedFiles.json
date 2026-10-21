@@ -1,0 +1,26 @@
+{
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/client": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/context": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/dimensions": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/skill": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/tag": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/text": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/type": {
+    "color": "gray"
+  },
+  "/home/javier/Escritorio/Proyectos/Publicator/publicator/src/modules/url": {
+    "color": "gray"
+  }
+}

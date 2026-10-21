@@ -1,0 +1,14 @@
+.header {
+  position: fixed;
+  width: 100%;
+  height: 77px;
+}
+
+.header-toolbar {
+  height: 77px;
+  min-height: 77px !important;
+}
+
+.header-menu-button {
+  margin-right: 16px;
+}

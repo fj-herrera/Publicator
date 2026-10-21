@@ -1,16 +1,25 @@
 {
     "workbench.colorCustomizations": {
-        "activityBar.foreground": "#FFA0EA",
-        "activityBar.background": "#2D0023",
-        "activityBar.inactiveForeground": "#771C8B",
-        "activityBarBadge.foreground": "#1D0002",
-        "activityBarBadge.background": "#FF7E86",
-        "statusBar.foreground": "#EAE883",
-        "statusBar.background": "#676600",
-        "statusBarItem.hoverBackground": "#39540C",
-        "statusBarItem.remoteForeground": "#B2FF93",
-        "statusBarItem.remoteBackground": "#2E800E",
+        "activityBar.foreground": "#7EDCEB",
+        "activityBar.background": "#000506",
+        "activityBar.inactiveForeground": "#006349",
+        "activityBarBadge.foreground": "#000C4D",
+        "activityBarBadge.background": "#97A7FF",
+        "statusBar.foreground": "#C7FA84",
+        "statusBar.background": "#457701",
+        "statusBarItem.hoverBackground": "#265C16",
+        "statusBarItem.remoteForeground": "#A0FFB1",
+        "statusBarItem.remoteBackground": "#17862B",
         "statusBar.debuggingForeground": "#000000",
-        "statusBar.debuggingBackground": "#9E9C37"
-    }
+        "statusBar.debuggingBackground": "#7BAE38"
+    },
+    "material-icon-theme.folders.customClones": [
+        {
+            "name": "gray-modules",
+            "base": "folder",
+            "color": "#90a4ae",
+            "lightColor": "#90a4ae",
+            "folderNames": ["skill", "context", "client"]
+        }
+    ]
 }

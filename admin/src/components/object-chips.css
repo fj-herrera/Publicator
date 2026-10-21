@@ -1,0 +1,51 @@
+.object-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 66px 24px;
+  background-color: #fff;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.object-chip.MuiChip-root {
+  height: 32px;
+  border-radius: 16px;
+  background-color: #eaeaea;
+  color: #212121;
+}
+
+.object-chip.MuiChip-outlined {
+  background-color: #fff;
+}
+
+.object-chip-selected.MuiChip-root {
+  background-color: #1976d2;
+  color: #fff;
+}
+
+.object-chip-selected.MuiChip-outlined {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.object-chips .object-chip.MuiChip-root .MuiChip-icon {
+  width: 18px;
+  height: 18px;
+  margin-left: 12px;
+  margin-right: 6px;
+  color: currentColor;
+}
+
+.object-chip .MuiChip-icon img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.object-chip .MuiChip-label {
+  padding: 0 14px 0 0;
+  font-size: 13px;
+}

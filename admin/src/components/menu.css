@@ -1,0 +1,19 @@
+.menu-drawer {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.menu-drawer .MuiDrawer-paper {
+  width: 200px;
+  box-sizing: border-box;
+  top: 77px;
+  height: calc(100% - 77px);
+}
+
+.menu-drawer .menu-item.active {
+  background-color: var(--mui-palette-action-selected, rgba(0, 0, 0, 0.08));
+}
+
+.menu-drawer.mobile .MuiDrawer-paper {
+  width: 200px;
+}

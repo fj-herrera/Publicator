@@ -4,6 +4,7 @@ import { CreateTypeDto } from './dto/create-type.dto.js';
 import { UpdateTypeDto } from './dto/update-type.dto.js';
 import { Repository } from 'typeorm';
 import { Type } from './entities/type.entity.js';
+import { Publication } from '../publication/entities/publication.entity.js';
 
 
 @Injectable()
@@ -11,6 +12,9 @@ export class TypeService {
   constructor(
     @InjectRepository(Type)
     private readonly typeRepository: Repository<Type>,
+
+    @InjectRepository(Publication)
+    private readonly publicationRepository: Repository<Publication>,
   ) {}
 
   async create(name: string): Promise<Type> {
@@ -33,8 +37,23 @@ export class TypeService {
     }
   }
 
-  async findAll() : Promise<Type[]> {
-    return this.typeRepository.find();
+  async findAll(): Promise<(Type & { inPublications: number })[]> {
+    const types = await this.typeRepository.find();
+    const publicationCounts = await this.publicationRepository
+      .createQueryBuilder('publication')
+      .select('type.id', 'typeId')
+      .addSelect('COUNT(publication.id)', 'count')
+      .innerJoin('publication.type', 'type')
+      .groupBy('type.id')
+      .getRawMany<{ typeId: number; count: string }>();
+    const countsByTypeId = new Map(
+      publicationCounts.map(({ typeId, count }) => [Number(typeId), Number(count)]),
+    );
+
+    return types.map((type) => ({
+      ...type,
+      inPublications: countsByTypeId.get(type.id) ?? 0,
+    }));
   }
 
   async findOne(id: number): Promise<Type> {

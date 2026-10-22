@@ -1,4 +1,4 @@
-export type TypeRow = {
+export type PublicationType = {
   id: number
   name: string
   inPublications: number

@@ -1,3 +1,5 @@
+// components/Menu.tsx
+
 import {
   Drawer,
   List,
@@ -8,6 +10,7 @@ import {
 import { NavLink } from 'react-router'
 import './menu.css'
 
+// Menu items for the navigation drawer
 const menuItems = [
   { label: 'Publications', path: '/publications' },
   { label: 'Gallery', path: '/gallery' },
@@ -16,6 +19,7 @@ const menuItems = [
   { label: 'Settings', path: '/settings' },
 ]
 
+// Menu component
 function Menu({
   open,
   onClose,

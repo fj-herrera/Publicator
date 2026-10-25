@@ -8,9 +8,11 @@ export type ObjectChipItem = {
   iconUrl?: string | null
 }
 
+// variantes de los chips y modos de icono
 type ObjectChipsVariant = 'filled' | 'outlined'
 type ObjectChipsIconMode = 'bookmark' | 'none' | 'url'
 
+// Props for the ObjectChips component
 type ObjectChipsProps = {
   items: ObjectChipItem[]
   variant?: ObjectChipsVariant
@@ -19,6 +21,7 @@ type ObjectChipsProps = {
   onSelect?: (id: number | string) => void
 }
 
+// ObjectChips component
 function ObjectChips({
   items,
   variant = 'filled',
@@ -34,7 +37,7 @@ function ObjectChips({
         return (
           <Chip
             key={item.id}
-            className={`object-chip${selected ? ' object-chip-selected' : ''}`}
+            className={`object-chip${selected ? ' object-chip-selected' : ''}${iconMode === 'none' ? ' object-chip-no-icon' : ''}`}
             variant={variant}
             icon={
               iconMode === 'bookmark' ? (

@@ -1,0 +1,7 @@
+{
+	"system": "linux",
+	"executablePath": "",
+	"localhost": "localhost:3000",
+	"headless_browser": false,
+	"reactTheme": "dark"
+}

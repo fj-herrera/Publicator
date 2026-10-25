@@ -9,34 +9,30 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 
-type PublicationTypeDeleteDialogProps = {
+type TagDeleteDialogProps = {
   open: boolean
-  typeName: string
+  tagName: string
   error: string
   isDeleting: boolean
   onClose: () => void
   onConfirm: () => void
 }
 
-function PublicationTypeDeleteDialog({
+function TagDeleteDialog({
   open,
-  typeName,
+  tagName,
   error,
   isDeleting,
   onClose,
   onConfirm,
-}: PublicationTypeDeleteDialogProps) {
+}: TagDeleteDialogProps) {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      aria-labelledby="delete-type-dialog-title"
-    >
-      <DialogTitle id="delete-type-dialog-title">Delete type?</DialogTitle>
+    <Dialog open={open} onClose={onClose} aria-labelledby="delete-tag-dialog-title">
+      <DialogTitle id="delete-tag-dialog-title">Delete tag?</DialogTitle>
       <DialogContent>
-        {error && <Alert className="type-api-error" severity="error">{error}</Alert>}
+        {error && <Alert className="tag-api-error" severity="error">{error}</Alert>}
         <DialogContentText>
-          Are you sure you want to delete &quot;{typeName}&quot;?
+          Are you sure you want to delete &quot;{tagName}&quot;?
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -57,4 +53,4 @@ function PublicationTypeDeleteDialog({
   )
 }
 
-export default PublicationTypeDeleteDialog
+export default TagDeleteDialog

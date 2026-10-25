@@ -2,48 +2,39 @@ import { useState, type FormEvent } from 'react'
 import { Button, TextField } from '@mui/material'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
-import './publication-types.css'
+import './tags.css'
 
-type PublicationTypeFormProps = {
+type TagFormProps = {
   initialName: string
   submitLabel: string
   onSubmit: (name: string) => Promise<void>
   onCancel: () => void
 }
 
-function PublicationTypeForm({
-  initialName,
-  submitLabel,
-  onSubmit,
-  onCancel,
-}: PublicationTypeFormProps) {
-  const [typeName, setTypeName] = useState(initialName)
+function TagForm({ initialName, submitLabel, onSubmit, onCancel }: TagFormProps) {
+  const [tagName, setTagName] = useState(initialName)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const name = typeName.trim()
+    const name = tagName.trim()
 
     if (name) {
       await onSubmit(name)
     }
   }
 
-  const handleCancel = () => {
-    onCancel()
-  }
-
   return (
-    <form className="type-create-form" onSubmit={handleSubmit}>
+    <form className="tag-form" onSubmit={handleSubmit}>
       <TextField
-        className="type-create-name"
+        className="tag-form-name"
         label="Name"
         required
-        value={typeName}
-        onChange={(event) => setTypeName(event.target.value)}
+        value={tagName}
+        onChange={(event) => setTagName(event.target.value)}
       />
-      <div className="type-create-actions">
+      <div className="tag-form-actions">
         <Button
-          className="type-create-save"
+          className="tag-form-save"
           type="submit"
           variant="contained"
           startIcon={<CheckIcon />}
@@ -51,11 +42,11 @@ function PublicationTypeForm({
           {submitLabel}
         </Button>
         <Button
-          className="type-create-cancel"
+          className="tag-form-cancel"
           type="button"
           variant="outlined"
           startIcon={<CloseIcon />}
-          onClick={handleCancel}
+          onClick={onCancel}
         >
           Cancel
         </Button>
@@ -64,4 +55,4 @@ function PublicationTypeForm({
   )
 }
 
-export default PublicationTypeForm
+export default TagForm

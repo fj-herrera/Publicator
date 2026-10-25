@@ -1,15 +1,15 @@
 import { Alert } from '@mui/material'
-import PublicationTypeDeleteDialog from './PublicationTypeDeleteDialog'
-import PublicationTypeForm from './PublicationTypeForm'
-import PublicationTypeList from './PublicationTypeList'
-import usePublicationTypesView from './usePublicationTypesView.ts'
+import TypeDeleteDialog from './TypeDeleteDialog'
+import TypeForm from './TypeForm'
+import TypeList from './TypeList'
+import useTypesView from './useTypesView'
 
-type PublicationTypesProps = {
+type TypesProps = {
   isCreateFormOpen: boolean
   onCreateFormClose: () => void
 }
 
-function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTypesProps) {
+function Types({ isCreateFormOpen, onCreateFormClose }: TypesProps) {
   const {
     types,
     isTypesLoading,
@@ -28,7 +28,7 @@ function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTy
     handleConfirmDelete,
     handleCancelDelete,
     clearSuccessMessage,
-  } = usePublicationTypesView({ isCreateFormOpen, onCreateFormClose })
+  } = useTypesView({ isCreateFormOpen, onCreateFormClose })
 
   return (
     <>
@@ -41,7 +41,7 @@ function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTy
         </Alert>
       )}
       {isFormOpen ? (
-        <PublicationTypeForm
+        <TypeForm
           key={editingType?.id ?? 'create'}
           initialName={editingType?.name ?? 'New Type'}
           submitLabel={editingType ? 'Update' : 'Save'}
@@ -50,7 +50,7 @@ function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTy
         />
       ) : (
         !isTypesLoading && !typeError && types.length > 0 && (
-          <PublicationTypeList
+          <TypeList
             types={types}
             selectedTypeId={selectedTypeId}
             onTypeSelect={setSelectedTypeId}
@@ -59,7 +59,7 @@ function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTy
           />
         )
       )}
-      <PublicationTypeDeleteDialog
+      <TypeDeleteDialog
         open={typePendingDelete !== null}
         typeName={typePendingDelete?.name ?? ''}
         error={typePendingDelete ? typeError : ''}
@@ -71,4 +71,4 @@ function PublicationTypes({ isCreateFormOpen, onCreateFormClose }: PublicationTy
   )
 }
 
-export default PublicationTypes
+export default Types

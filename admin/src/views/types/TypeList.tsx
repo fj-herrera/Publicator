@@ -4,30 +4,30 @@ import {
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
-import type { PublicationType } from '../../entities/types/publication-type'
+import type { Type } from '../../entities/type'
 import DataGrid, { type DataGridColumn } from '../../components/DataGrid'
 import ObjectChips from '../../components/ObjectChips'
 
-type PublicationTypeListProps = {
-  types: PublicationType[]
+type TypeListProps = {
+  types: Type[]
   selectedTypeId: number | null
   onTypeSelect: (id: number | null) => void
-  onEdit: (type: PublicationType) => void
-  onDelete: (type: PublicationType) => void
+  onEdit: (type: Type) => void
+  onDelete: (type: Type) => void
 }
 
-function PublicationTypeList({
+function TypeList({
   types,
   selectedTypeId,
   onTypeSelect,
   onEdit,
   onDelete,
-}: PublicationTypeListProps) {
+}: TypeListProps) {
   const visibleTypes = selectedTypeId === null
     ? types
     : types.filter((type) => type.id === selectedTypeId)
 
-  const columns: DataGridColumn<PublicationType>[] = [
+  const columns: DataGridColumn<Type>[] = [
     { field: 'name', header: 'Name', className: 'data-grid-name-column' },
     {
       field: 'inPublications',
@@ -53,16 +53,23 @@ function PublicationTypeList({
               <EditIcon aria-hidden="true" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={`Delete ${type.name}`}>
-            <IconButton
-              aria-label={`Delete ${type.name}`}
-              onClick={(event) => {
-                event.stopPropagation()
-                onDelete(type)
-              }}
-            >
-              <DeleteIcon aria-hidden="true" />
-            </IconButton>
+          <Tooltip
+            title={type.inPublications > 0
+              ? 'This item cannot be deleted while it is used in publications. Remove it from all publications first.'
+              : `Delete ${type.name}`}
+          >
+            <span tabIndex={type.inPublications > 0 ? 0 : undefined}>
+              <IconButton
+                aria-label={`Delete ${type.name}`}
+                disabled={type.inPublications > 0}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onDelete(type)
+                }}
+              >
+                <DeleteIcon aria-hidden="true" />
+              </IconButton>
+            </span>
           </Tooltip>
         </span>
       ),
@@ -80,7 +87,7 @@ function PublicationTypeList({
         selectedId={selectedTypeId}
         onSelect={(id) => handleTypeSelect(Number(id))}
       />
-      <DataGrid<PublicationType>
+      <DataGrid<Type>
         key={selectedTypeId ?? 'all-types'}
         columns={columns}
         rows={visibleTypes}
@@ -91,4 +98,4 @@ function PublicationTypeList({
   )
 }
 
-export default PublicationTypeList
+export default TypeList

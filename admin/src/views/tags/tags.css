@@ -1,0 +1,62 @@
+.tag-form {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 102px;
+    padding: 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.tag-form-name {
+    width: 246px;
+}
+
+.tag-form .MuiInputBase-root {
+    height: 50px;
+}
+
+.tag-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.tag-form .MuiButton-root {
+    height: 32px;
+    min-height: 32px;
+    font-size: 14px;
+}
+
+.tag-form .tag-form-save.MuiButton-root {
+    min-width: 82px;
+    background-color: #1976d2;
+}
+
+.tag-form .tag-form-save.MuiButton-root:hover {
+    background-color: #1565c0;
+}
+
+.tag-form .tag-form-cancel.MuiButton-root {
+    min-width: 100px;
+    border-color: #1976d2;
+    color: #1976d2;
+}
+
+@media (max-width: 600px) {
+    .tag-form {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .tag-form-name {
+        width: 100%;
+        max-width: 246px;
+    }
+
+    .tag-form-actions {
+        gap: 12px;
+    }
+}

@@ -4,6 +4,7 @@ import { CreateTagDto } from './dto/create-tag.dto.js';
 import { UpdateTagDto } from './dto/update-tag.dto.js';
 import { Repository } from 'typeorm';
 import { Tag } from './entities/tag.entity.js';
+import { PublicationTag } from '../publication-tag/entities/publication-tag.entity.js';
 
 
 @Injectable()
@@ -11,6 +12,9 @@ export class TagService {
   constructor(
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+
+    @InjectRepository(PublicationTag)
+    private readonly publicationTagRepository: Repository<PublicationTag>,
   ) {}
 
   async create(name: string): Promise<Tag> {
@@ -33,8 +37,23 @@ export class TagService {
     }
   }
 
-  async findAll() : Promise<Tag[]> {
-    return this.tagRepository.find();
+  async findAll(): Promise<(Tag & { inPublications: number })[]> {
+    const tags = await this.tagRepository.find();
+    const publicationCounts = await this.publicationTagRepository
+      .createQueryBuilder('publicationTag')
+      .select('tag.id', 'tagId')
+      .addSelect('COUNT(publicationTag.id)', 'count')
+      .innerJoin('publicationTag.tag', 'tag')
+      .groupBy('tag.id')
+      .getRawMany<{ tagId: number; count: string }>();
+    const countsByTagId = new Map(
+      publicationCounts.map(({ tagId, count }) => [Number(tagId), Number(count)]),
+    );
+
+    return tags.map((tag) => ({
+      ...tag,
+      inPublications: countsByTagId.get(tag.id) ?? 0,
+    }));
   }
 
   async findOne(id: number): Promise<Tag> {

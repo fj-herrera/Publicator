@@ -1,19 +1,19 @@
 import { useState } from 'react'
-import type { PublicationType } from '../../entities/types/publication-type'
-import usePublicationTypes from '../../hooks/usePublicationTypes'
+import type { Type } from '../../entities/type'
+import useTypes from '../../hooks/useTypes'
 
-type UsePublicationTypesViewOptions = {
+type UseTypesViewOptions = {
   isCreateFormOpen: boolean
   onCreateFormClose: () => void
 }
 
-function usePublicationTypesView({
+function useTypesView({
   isCreateFormOpen,
   onCreateFormClose,
-}: UsePublicationTypesViewOptions) {
+}: UseTypesViewOptions) {
   const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null)
-  const [editingType, setEditingType] = useState<PublicationType | null>(null)
-  const [typePendingDelete, setTypePendingDelete] = useState<PublicationType | null>(null)
+  const [editingType, setEditingType] = useState<Type | null>(null)
+  const [typePendingDelete, setTypePendingDelete] = useState<Type | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const {
@@ -24,7 +24,7 @@ function usePublicationTypesView({
     updateType,
     deleteType,
     clearError,
-  } = usePublicationTypes()
+  } = useTypes()
 
   const handleSaveType = async (name: string): Promise<void> => {
     setSuccessMessage('')
@@ -54,13 +54,13 @@ function usePublicationTypesView({
     onCreateFormClose()
   }
 
-  const handleEditType = (type: PublicationType) => {
+  const handleEditType = (type: Type) => {
     setSuccessMessage('')
     clearError()
     setEditingType(type)
   }
 
-  const handleDeleteType = (type: PublicationType) => {
+  const handleDeleteType = (type: Type) => {
     setSuccessMessage('')
     clearError()
     setTypePendingDelete(type)
@@ -118,4 +118,4 @@ function usePublicationTypesView({
   }
 }
 
-export default usePublicationTypesView
+export default useTypesView

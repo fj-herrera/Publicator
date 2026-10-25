@@ -24,6 +24,7 @@ import { AssetTextModule } from './modules/asset-text/asset-text.module.js';
 import { PublicationContextModule } from './modules/publication-context/publication-context.module.js';
 import { TextContentModule } from './modules/text-content/text-content.module.js';
 import { PublicationAssetModule } from './modules/publication-asset/publication-asset.module.js';
+import { MediaModule } from './modules/media/media.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -64,6 +65,7 @@ import { PublicationAssetModule } from './modules/publication-asset/publication-
     PublicationContextModule,
     TextContentModule,
     PublicationAssetModule,
+    MediaModule,
   ],
 
   controllers: [AppController],

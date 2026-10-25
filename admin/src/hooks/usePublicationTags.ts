@@ -6,6 +6,7 @@ import {
   updatePublicationTag,
 } from '../services/publication-tags.service'
 import { getErrorMessage } from '../services/api-error'
+import { apiMessages } from '../constants/api-messages'
 import type { Tag } from '../entities/tag'
 
 function usePublicationTags() {
@@ -25,7 +26,7 @@ function usePublicationTags() {
         }
       } catch (loadError) {
         if (isCurrent) {
-          setError(getErrorMessage(loadError, 'Unable to load tags.'))
+          setError(getErrorMessage(loadError, apiMessages.tags.loadFailed))
         }
       } finally {
         if (isCurrent) {
@@ -52,7 +53,7 @@ function usePublicationTags() {
       ])
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, 'Unable to create tag.'))
+      setError(getErrorMessage(createError, apiMessages.tags.createFailed))
       return false
     }
   }
@@ -67,7 +68,7 @@ function usePublicationTags() {
       )))
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, 'Unable to update tag.'))
+      setError(getErrorMessage(updateError, apiMessages.tags.updateFailed))
       return false
     }
   }
@@ -80,7 +81,7 @@ function usePublicationTags() {
       setTags((currentTags) => currentTags.filter((tag) => tag.id !== id))
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, 'Unable to delete tag.'))
+      setError(getErrorMessage(deleteError, apiMessages.tags.deleteFailed))
       return false
     }
   }

@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, ConflictException, Type } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto.js';
 import { UpdateClientDto } from './dto/update-client.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity.js';
+import { Publication } from '../publication/entities/publication.entity.js';
 
 
 @Injectable()
@@ -11,11 +12,14 @@ export class ClientService {
   constructor(
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
+
+    @InjectRepository(Publication)
+    private readonly publicationRepository: Repository<Publication>,
   ) {}
 
-  async create(name: string): Promise<Client> {
+  async create(createClientDto: CreateClientDto): Promise<Client> {
     try {
-      const client = this.clientRepository.create({ name });
+      const client = this.clientRepository.create(createClientDto);
 
       return await this.clientRepository.save(client);
     } catch (error) {
@@ -25,7 +29,7 @@ export class ClientService {
         error.code === '23505'
       ) {
         throw new ConflictException(
-          `Client with name "${name}" already exists`,
+          `Client with name "${createClientDto.name}" already exists`,
         );
       }
 
@@ -33,8 +37,24 @@ export class ClientService {
     }
   }
 
-  async findAll() : Promise<Client[]> {
-      return this.clientRepository.find();
+  async findAll(): Promise<(Client & { inPublications: number })[]> {
+    const clients = await this.clientRepository.find();
+    const publicationCounts = await this.publicationRepository
+      .createQueryBuilder('publication')
+      .select('client.id', 'clientId')
+      .addSelect('COUNT(publication.id)', 'count')
+      .innerJoin('publication.meta', 'meta')
+      .innerJoin('meta.client', 'client')
+      .groupBy('client.id')
+      .getRawMany<{ clientId: number; count: string }>();
+    const countsByClientId = new Map(
+      publicationCounts.map(({ clientId, count }) => [Number(clientId), Number(count)]),
+    );
+
+    return clients.map((client) => ({
+      ...client,
+      inPublications: countsByClientId.get(client.id) ?? 0,
+    }));
   }
 
   async findOne(id: number): Promise<Client> {

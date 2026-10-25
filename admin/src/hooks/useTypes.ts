@@ -6,6 +6,7 @@ import {
   updateTypeRequest,
 } from '../services/types.service'
 import { getErrorMessage } from '../services/api-error'
+import { apiMessages } from '../constants/api-messages'
 import type { Type } from '../entities/type'
 
 function useTypes() {
@@ -25,7 +26,7 @@ function useTypes() {
         }
       } catch (loadError) {
         if (isCurrent) {
-          setError(getErrorMessage(loadError, 'Unable to load types.'))
+          setError(getErrorMessage(loadError, apiMessages.types.loadFailed))
         }
       } finally {
         if (isCurrent) {
@@ -52,7 +53,7 @@ function useTypes() {
       ])
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, 'Unable to create type.'))
+      setError(getErrorMessage(createError, apiMessages.types.createFailed))
       return false
     }
   }
@@ -67,7 +68,7 @@ function useTypes() {
       )))
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, 'Unable to update type.'))
+      setError(getErrorMessage(updateError, apiMessages.types.updateFailed))
       return false
     }
   }
@@ -80,7 +81,7 @@ function useTypes() {
       setTypes((currentTypes) => currentTypes.filter((type) => type.id !== id))
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, 'Unable to delete type.'))
+      setError(getErrorMessage(deleteError, apiMessages.types.deleteFailed))
       return false
     }
   }

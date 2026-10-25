@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Box, useMediaQuery } from '@mui/material'
 import { Route, Routes, Navigate } from 'react-router'
 
-import Header from './components/Header'
-import Menu from './components/Menu'
+import Header from './components/layout/Header'
+import Menu from './components/layout/Menu'
 
 import Publications from './pages/Publications'
 import Gallery from './pages/Gallery'

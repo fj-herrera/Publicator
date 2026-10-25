@@ -1,0 +1,78 @@
+.context-form {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 102px;
+    padding: 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.context-form-name {
+    width: 246px;
+}
+
+.context-form .MuiInputBase-root {
+    height: 50px;
+}
+
+.context-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.context-form .MuiButton-root {
+    height: 32px;
+    min-height: 32px;
+    font-size: 14px;
+}
+
+.context-form .context-form-save.MuiButton-root {
+    min-width: 82px;
+    background-color: #1976d2;
+}
+
+.context-form .context-form-save.MuiButton-root:hover {
+    background-color: #1565c0;
+}
+
+.context-form .context-form-cancel.MuiButton-root {
+    min-width: 100px;
+    border-color: #1976d2;
+    color: #1976d2;
+}
+
+.context-cards {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: 16px;
+    padding: 24px;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+@media (max-width: 600px) {
+    .context-form {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .context-form-name {
+        width: 100%;
+        max-width: 246px;
+    }
+
+    .context-form-actions {
+        gap: 12px;
+    }
+
+    .context-cards {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+}

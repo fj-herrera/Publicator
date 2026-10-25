@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Box } from '@mui/material'
-import SectionTabs from '../components/SectionTabs'
-import Types from '../views/types/Types'
-import Tags from '../views/tags/Tags'
+import SectionTabs from '../components/navigation/SectionTabs'
+import Types from '../views/Types'
+import Tags from '../views/Tags'
+import Contexts from '../views/Contexts'
 import PushPinIcon from '@mui/icons-material/PushPin'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 import BoltIcon from '@mui/icons-material/Bolt'
@@ -13,6 +14,7 @@ function Publications() {
   const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]))
   const [isTypeFormOpen, setIsTypeFormOpen] = useState(false)
   const [isTagFormOpen, setIsTagFormOpen] = useState(false)
+  const [isContextFormOpen, setIsContextFormOpen] = useState(false)
   const tabContent: Record<string, string> = {
     all: 'Publications',
     types: 'Types',
@@ -33,6 +35,11 @@ function Publications() {
 
     if (activeTab === 'tags') {
       setIsTagFormOpen(true)
+      return
+    }
+
+    if (activeTab === 'contexts') {
+      setIsContextFormOpen(true)
     }
   }
 
@@ -71,7 +78,15 @@ function Publications() {
           />
         </Box>
       )}
-      {activeTab !== 'types' && activeTab !== 'tags' && (
+      {visitedTabs.has('contexts') && (
+        <Box component="section" hidden={activeTab !== 'contexts'}>
+          <Contexts
+            isCreateFormOpen={isContextFormOpen}
+            onCreateFormClose={() => setIsContextFormOpen(false)}
+          />
+        </Box>
+      )}
+      {activeTab !== 'types' && activeTab !== 'tags' && activeTab !== 'contexts' && (
         <section><span>{tabContent[activeTab]}</span></section>
       )}
     </>

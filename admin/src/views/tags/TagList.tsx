@@ -2,8 +2,8 @@ import { IconButton, Tooltip } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import type { Tag } from '../../entities/tag'
-import DataGrid, { type DataGridColumn } from '../../components/DataGrid'
-import ObjectChips from '../../components/ObjectChips'
+import DataGrid, { type DataGridColumn } from '../../components/data-display/DataGrid'
+import ObjectChips from '../../components/data-display/ObjectChips'
 
 type TagListProps = {
   tags: Tag[]

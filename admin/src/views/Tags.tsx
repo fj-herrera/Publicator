@@ -1,8 +1,8 @@
 import { Alert } from '@mui/material'
-import TagDeleteDialog from './TagDeleteDialog'
-import TagForm from './TagForm'
-import TagList from './TagList'
-import usePublicationTagsView from './usePublicationTagsView'
+import TagDeleteDialog from '../components/tags/TagDeleteDialog'
+import TagForm from '../components/tags/TagForm'
+import TagList from '../components/tags/TagList'
+import useTagsView from '../hooks/useTagsView'
 
 type TagsProps = {
   isCreateFormOpen: boolean
@@ -28,7 +28,7 @@ function Tags({ isCreateFormOpen, onCreateFormClose }: TagsProps) {
     handleConfirmDelete,
     handleCancelDelete,
     clearSuccessMessage,
-  } = usePublicationTagsView({ isCreateFormOpen, onCreateFormClose })
+  } = useTagsView({ isCreateFormOpen, onCreateFormClose })
 
   return (
     <>

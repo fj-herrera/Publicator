@@ -1,11 +1,12 @@
 import type { Tag } from '../entities/tag'
+import { apiMessages } from '../constants/api-messages'
 import { getApiError } from './api-error'
 
 export async function getPublicationTags(): Promise<Tag[]> {
   const response = await fetch('/api/tags')
 
   if (!response.ok) {
-    throw await getApiError(response, 'Unable to load tags.')
+    throw await getApiError(response, apiMessages.tags.loadFailed)
   }
 
   return await response.json() as Tag[]
@@ -21,7 +22,7 @@ export async function createPublicationTag(
   })
 
   if (!response.ok) {
-    throw await getApiError(response, 'Unable to create tag.')
+    throw await getApiError(response, apiMessages.tags.createFailed)
   }
 
   return await response.json() as Omit<Tag, 'inPublications'>
@@ -38,7 +39,7 @@ export async function updatePublicationTag(
   })
 
   if (!response.ok) {
-    throw await getApiError(response, 'Unable to update tag.')
+    throw await getApiError(response, apiMessages.tags.updateFailed)
   }
 
   return await response.json() as Omit<Tag, 'inPublications'>
@@ -48,6 +49,6 @@ export async function deletePublicationTag(id: number): Promise<void> {
   const response = await fetch(`/api/tags/${id}`, { method: 'DELETE' })
 
   if (!response.ok) {
-    throw await getApiError(response, 'Unable to delete tag.')
+    throw await getApiError(response, apiMessages.tags.deleteFailed)
   }
 }

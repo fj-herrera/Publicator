@@ -4,12 +4,16 @@ import { UpdateContextDto } from './dto/update-context.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Context } from './entities/context.entity.js';
+import { PublicationContext } from '../publication-context/entities/publication-context.entity.js';
 
 @Injectable()
 export class ContextService {
   constructor(
     @InjectRepository(Context)
     private readonly contextRepository: Repository<Context>,
+
+    @InjectRepository(PublicationContext)
+    private readonly publicationContextRepository: Repository<PublicationContext>,
   ) {}
 
   async create(name: string): Promise<Context> {
@@ -24,7 +28,7 @@ export class ContextService {
         error.code === '23505'
       ) {
         throw new ConflictException(
-          `Type with name "${name}" already exists`,
+          `Context with name "${name}" already exists`,
         );
       }
 
@@ -32,8 +36,23 @@ export class ContextService {
     }
   }
 
-  async findAll() : Promise<Context[]> {
-    return this.contextRepository.find();
+  async findAll(): Promise<(Context & { inPublications: number })[]> {
+    const contexts = await this.contextRepository.find();
+    const publicationCounts = await this.publicationContextRepository
+      .createQueryBuilder('publicationContext')
+      .select('context.id', 'contextId')
+      .addSelect('COUNT(publicationContext.id)', 'count')
+      .innerJoin('publicationContext.context', 'context')
+      .groupBy('context.id')
+      .getRawMany<{ contextId: number; count: string }>();
+    const countsByContextId = new Map(
+      publicationCounts.map(({ contextId, count }) => [Number(contextId), Number(count)]),
+    );
+
+    return contexts.map((context) => ({
+      ...context,
+      inPublications: countsByContextId.get(context.id) ?? 0,
+    }));
   }
 
   async findOne(id: number): Promise<Context> {

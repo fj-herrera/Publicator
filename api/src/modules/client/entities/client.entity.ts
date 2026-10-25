@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Client {
@@ -13,5 +13,10 @@ export class Client {
     })
     name: string;
 
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
+    logo: string | null;
 
 }

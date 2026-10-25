@@ -1,4 +1,4 @@
-// components/Menu.tsx
+// components/layout/Menu.tsx
 
 import {
   Drawer,

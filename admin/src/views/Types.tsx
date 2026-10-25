@@ -1,8 +1,8 @@
 import { Alert } from '@mui/material'
-import TypeDeleteDialog from './TypeDeleteDialog'
-import TypeForm from './TypeForm'
-import TypeList from './TypeList'
-import useTypesView from './useTypesView'
+import TypeDeleteDialog from '../components/types/TypeDeleteDialog'
+import TypeForm from '../components/types/TypeForm'
+import TypeList from '../components/types/TypeList'
+import useTypesView from '../hooks/useTypesView'
 
 type TypesProps = {
   isCreateFormOpen: boolean

@@ -1,0 +1,30 @@
+.skill-chip-shelf {
+  background-color: #fff;
+}
+
+.skill-chip-shelf .object-chips {
+  align-content: center;
+}
+
+.skill-chip-shelf .object-chips .object-chip.MuiChip-root .MuiChip-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.skill-chip-shelf .object-chip .MuiChip-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+.skill-chip-empty {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 166px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 24px;
+  color: #6b6375;
+  font-size: 14px;
+  text-align: center;
+}

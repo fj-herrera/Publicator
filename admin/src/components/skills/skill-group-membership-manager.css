@@ -1,0 +1,157 @@
+.skill-membership-manager {
+    padding: 20px 24px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.skill-membership-transfer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+.skill-membership-panel.MuiPaper-root {
+    min-width: 0;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.skill-membership-panel-heading {
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f3f3f3;
+}
+
+.skill-membership-panel-heading h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.skill-membership-panel-heading span {
+    color: #6b6375;
+    font-size: 12px;
+}
+
+.skill-membership-chip-list {
+    box-sizing: border-box;
+    display: flex;
+    min-height: 84px;
+    max-height: 220px;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 12px;
+    overflow: auto;
+    padding: 16px;
+}
+
+.skill-membership-chip.MuiChip-root {
+    height: 34px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.skill-membership-chip .MuiChip-icon {
+    width: 24px;
+    height: 24px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.skill-membership-chip .MuiChip-icon img {
+    display: block;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.skill-membership-chip-selected.MuiChip-root {
+    border-color: #1976d2;
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.skill-membership-chip.MuiChip-root:hover {
+    border-color: #1976d2;
+}
+
+.skill-membership-chip-list .skill-membership-empty.MuiTypography-root {
+    width: 100%;
+    padding: 20px 0;
+    color: #6b6375;
+    text-align: center;
+}
+
+.skill-membership-list.MuiList-root {
+    max-height: 220px;
+    overflow: auto;
+    padding: 0;
+}
+
+.skill-membership-list .MuiListItemButton-root {
+    min-height: 48px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.skill-membership-list .MuiListItemButton-root:last-child {
+    border-bottom: 0;
+}
+
+.skill-membership-empty.MuiTypography-root {
+    padding: 20px 16px;
+    color: #6b6375;
+    text-align: center;
+}
+
+.skill-membership-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+}
+
+.skill-membership-controls>span {
+    box-sizing: border-box;
+    display: block;
+    flex: 0 0 64px;
+    min-width: 64px;
+    width: 64px;
+}
+
+.skill-membership-controls .MuiIconButton-root {
+    box-sizing: border-box;
+    width: 64px;
+    min-width: 64px;
+    height: 60px;
+    border: 1px solid #dedede;
+    border-radius: 8px;
+    color: #bdbdbd;
+}
+
+.skill-membership-loading.MuiTypography-root {
+    padding: 24px 0;
+    color: #6b6375;
+}
+
+@media (max-width: 700px) {
+    .skill-membership-transfer {
+        grid-template-columns: 1fr;
+    }
+
+    .skill-membership-controls>span {
+        flex: 1 1 100%;
+        min-width: 180px;
+        width: 100%;
+    }
+
+    .skill-membership-controls .MuiIconButton-root {
+        width: 100%;
+        min-width: 180px;
+    }
+}

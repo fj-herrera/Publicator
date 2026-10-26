@@ -1,7 +1,11 @@
 import { IsInt, IsNotEmpty } from 'class-validator';
 
-export class CreatePublicationSkillsDto {
+export class CreatePublicationSkillGroupDto {
   @IsInt()
   @IsNotEmpty()
   publicationId: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  skillGroupId: number;
 }

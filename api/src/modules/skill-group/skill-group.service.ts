@@ -1,15 +1,16 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SkillGroup } from './entities/skill-group.entity.js';
 import { CreateSkillGroupDto } from './dto/create-skill-group.dto.js';
 import { UpdateSkillGroupDto } from './dto/update-skill-group.dto.js';
-import { PublicationSkills } from '../../modules/publication-skills/entities/publication-skills.entity.js';
+import { SkillGroupSkill } from '../skill-group-skill/entities/skill-group-skill.entity.js';
+import { PublicationSkillGroup } from '../publication-skill-group/entities/publication-skill-group.entity.js';
 import { Skill } from '../../modules/skill/entities/skill.entity.js';
 
 @Injectable()
@@ -18,85 +19,68 @@ export class SkillGroupService {
     @InjectRepository(SkillGroup)
     private readonly skillGroupRepository: Repository<SkillGroup>,
 
-    @InjectRepository(PublicationSkills)
-    private readonly publicationSkillsRepository: Repository<PublicationSkills>,
+    @InjectRepository(SkillGroupSkill)
+    private readonly skillGroupSkillRepository: Repository<SkillGroupSkill>,
 
-    @InjectRepository(Skill)
-    private readonly skillRepository: Repository<Skill>,
+    @InjectRepository(PublicationSkillGroup)
+    private readonly publicationSkillGroupRepository: Repository<PublicationSkillGroup>,
   ) {}
 
   async create(
     createSkillGroupDto: CreateSkillGroupDto,
   ): Promise<SkillGroup> {
-    const { publicationSkillsId, skillId } = createSkillGroupDto;
-
-    const publicationSkills = await this.publicationSkillsRepository.findOneBy({
-      id: publicationSkillsId,
+    const skillGroup = this.skillGroupRepository.create({
+      name: createSkillGroupDto.name,
+      description: createSkillGroupDto.description ?? null,
     });
 
-    if (!publicationSkills) {
-      throw new NotFoundException(
-        `PublicationSkills with id ${publicationSkillsId} not found`,
-      );
-    }
-
-    const skill = await this.skillRepository.findOneBy({
-      id: skillId,
-    });
-
-    if (!skill) {
-      throw new NotFoundException(
-        `Skill with id ${skillId} not found`,
-      );
-    }
-
-    try {
-      const skillGroup = this.skillGroupRepository.create({
-        publicationSkills,
-        skill,
-      });
-
-      return await this.skillGroupRepository.save(skillGroup);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        'code' in error &&
-        error.code === '23505'
-      ) {
-        throw new ConflictException(
-          `Skill ${skillId} is already associated with PublicationSkills ${publicationSkillsId}`,
-        );
-      }
-
-      throw error;
-    }
+    return this.skillGroupRepository.save(skillGroup);
   }
 
-  async findAll(): Promise<SkillGroup[]> {
-    return this.skillGroupRepository.find({
-      relations: {
-        publicationSkills: true,
-        skill: true,
-      },
-    });
+  async findAll(): Promise<(SkillGroup & { skills: Skill[]; inPublications: number })[]> {
+    const [groups, skillLinks, publicationCounts] = await Promise.all([
+      this.skillGroupRepository.find(),
+      this.skillGroupSkillRepository.find({
+        relations: { skillGroup: true, skill: true },
+      }),
+      this.publicationSkillGroupRepository
+        .createQueryBuilder('publicationSkillGroup')
+        .select('skillGroup.id', 'skillGroupId')
+        .addSelect('COUNT(publicationSkillGroup.id)', 'count')
+        .innerJoin('publicationSkillGroup.skillGroup', 'skillGroup')
+        .groupBy('skillGroup.id')
+        .getRawMany<{ skillGroupId: number; count: string }>(),
+    ])
+    const skillsByGroupId = new Map<number, Skill[]>()
+    for (const skillLink of skillLinks) {
+      const groupSkills = skillsByGroupId.get(skillLink.skillGroup.id) ?? []
+      groupSkills.push(skillLink.skill)
+      skillsByGroupId.set(skillLink.skillGroup.id, groupSkills)
+    }
+    const publicationsByGroupId = new Map(
+      publicationCounts.map(({ skillGroupId, count }) => [
+        Number(skillGroupId),
+        Number(count),
+      ]),
+    )
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      skills: skillsByGroupId.get(group.id) ?? [],
+      inPublications: publicationsByGroupId.get(group.id) ?? 0,
+    }))
   }
 
-  async findOne(id: number): Promise<SkillGroup> {
-    const skillGroup = await this.skillGroupRepository.findOne({
-      where: { id },
-      relations: {
-        publicationSkills: true,
-        skill: true,
-      },
-    });
-
+  async findOne(
+    id: number,
+  ): Promise<SkillGroup & { skills: Skill[]; inPublications: number }> {
+    const skillGroup = (await this.findAll()).find((group) => group.id === id)
     if (!skillGroup) {
-      throw new NotFoundException(
-        `SkillGroup with id ${id} not found`,
-      );
+      throw new NotFoundException(`SkillGroup with id ${id} not found`)
     }
-
-    return skillGroup;
+    return skillGroup
   }
 
   async update(
@@ -117,52 +101,32 @@ export class SkillGroupService {
       throw new BadRequestException('No fields to update');
     }
 
-    if (updateSkillGroupDto.publicationSkillsId !== undefined) {
-      const publicationSkills = await this.publicationSkillsRepository.findOneBy({
-        id: updateSkillGroupDto.publicationSkillsId,
-      });
-
-      if (!publicationSkills) {
-        throw new NotFoundException(
-          `PublicationSkills with id ${updateSkillGroupDto.publicationSkillsId} not found`,
-        );
-      }
-
-      skillGroup.publicationSkills = publicationSkills;
+    if (updateSkillGroupDto.name !== undefined) {
+      skillGroup.name = updateSkillGroupDto.name
+    }
+    if (updateSkillGroupDto.description !== undefined) {
+      skillGroup.description = updateSkillGroupDto.description
     }
 
-    if (updateSkillGroupDto.skillId !== undefined) {
-      const skill = await this.skillRepository.findOneBy({
-        id: updateSkillGroupDto.skillId,
-      });
-
-      if (!skill) {
-        throw new NotFoundException(
-          `Skill with id ${updateSkillGroupDto.skillId} not found`,
-        );
-      }
-
-      skillGroup.skill = skill;
-    }
-
-    try {
-      return await this.skillGroupRepository.save(skillGroup);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        'code' in error &&
-        error.code === '23505'
-      ) {
-        throw new ConflictException(
-          'This Skill is already associated with this PublicationSkills',
-        );
-      }
-
-      throw error;
-    }
+    return this.skillGroupRepository.save(skillGroup);
   }
 
   async remove(id: number): Promise<void> {
+    const skillGroup = await this.skillGroupRepository.findOneBy({ id });
+    if (!skillGroup) {
+      throw new NotFoundException(`SkillGroup with id ${id} not found`);
+    }
+
+    const publicationAssociation = await this.publicationSkillGroupRepository.findOne({
+      where: { skillGroup: { id } },
+    });
+    if (publicationAssociation) {
+      throw new ConflictException(
+        'This skill group cannot be deleted while it is used in publications.',
+      );
+    }
+
+    await this.skillGroupSkillRepository.delete({ skillGroup: { id } });
     const result = await this.skillGroupRepository.delete(id);
 
     if (result.affected === 0) {

@@ -15,8 +15,9 @@ import { MetaModule } from './modules/meta/meta.module.js';
 import { PublicationModule } from './modules/publication/publication.module.js';
 import { ContentModule } from './modules/content/content.module.js';
 import { CollectionModule } from './modules/collection/collection.module.js';
-import { PublicationSkillsModule } from './modules/publication-skills/publication-skills.module.js';
 import { SkillGroupModule } from './modules/skill-group/skill-group.module.js';
+import { SkillGroupSkillModule } from './modules/skill-group-skill/skill-group-skill.module.js';
+import { PublicationSkillGroupModule } from './modules/publication-skill-group/publication-skill-group.module.js';
 import { PublicationTagModule } from './modules/publication-tag/publication-tag.module.js';
 import { AssetModule } from './modules/asset/asset.module.js';
 import { AssetCollectionModule } from './modules/asset-collection/asset-collection.module.js';
@@ -56,8 +57,9 @@ import { MediaModule } from './modules/media/media.module.js';
     PublicationModule,
     ContentModule,
     CollectionModule,
-    PublicationSkillsModule,
     SkillGroupModule,
+    SkillGroupSkillModule,
+    PublicationSkillGroupModule,
     PublicationTagModule,
     AssetModule,
     AssetCollectionModule,

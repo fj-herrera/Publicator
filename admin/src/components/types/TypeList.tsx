@@ -31,7 +31,7 @@ function TypeList({
     { field: 'name', header: 'Name', className: 'data-grid-name-column' },
     {
       field: 'inPublications',
-      header: 'In publications',
+      header: 'Publications',
       className: 'data-grid-publications-column',
     },
     {

@@ -37,7 +37,7 @@ function ObjectChips({
         return (
           <Chip
             key={item.id}
-            className={`object-chip${selected ? ' object-chip-selected' : ''}${iconMode === 'none' ? ' object-chip-no-icon' : ''}`}
+            className={`object-chip${selected ? ' object-chip-selected' : ''}${iconMode === 'none' || (iconMode === 'url' && !item.iconUrl) ? ' object-chip-no-icon' : ''}`}
             variant={variant}
             icon={
               iconMode === 'bookmark' ? (

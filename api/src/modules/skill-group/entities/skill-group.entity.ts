@@ -1,28 +1,13 @@
-import {
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-} from 'typeorm';
-import { PublicationSkills } from '../../publication-skills/entities/publication-skills.entity.js';
-import { Skill } from '../../skill/entities/skill.entity.js';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class SkillGroup {
-    @PrimaryGeneratedColumn('identity', {
-        generatedIdentity: 'ALWAYS',
-    })
-    id: number;
+  @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
+  id: number;
 
-    @ManyToOne(() => PublicationSkills, {
-        nullable: false,
-    })
-    @JoinColumn({ name: 'publication_skills_id' })
-    publicationSkills: PublicationSkills;
+  @Column({ type: 'varchar', length: 100, nullable: false })
+  name: string;
 
-    @ManyToOne(() => Skill, {
-        nullable: false,
-    })
-    @JoinColumn({ name: 'skill_id' })
-    skill: Skill;
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
 }

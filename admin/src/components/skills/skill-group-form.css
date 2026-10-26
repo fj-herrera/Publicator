@@ -1,0 +1,73 @@
+.skill-group-form {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(220px, 284px) minmax(260px, 1fr) auto;
+    align-items: center;
+    gap: 20px;
+    min-height: 118px;
+    padding: 24px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.skill-group-form .MuiInputBase-root {
+    min-height: 48px;
+}
+
+.skill-group-form-description .MuiInputBase-root {
+    min-height: 56px;
+}
+
+.skill-group-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.skill-group-form-actions .MuiButton-root {
+    height: 32px;
+    min-height: 32px;
+    font-size: 14px;
+}
+
+.skill-group-form-save.MuiButton-root {
+    min-width: 82px;
+    background-color: #1976d2;
+}
+
+.skill-group-form-save.MuiButton-root:hover {
+    background-color: #1565c0;
+}
+
+.skill-group-form-cancel.MuiButton-root {
+    min-width: 100px;
+    border-color: #1976d2;
+    color: #1976d2;
+}
+
+@media (max-width: 760px) {
+    .skill-group-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .skill-group-form-description {
+        grid-column: 1 / -1;
+    }
+
+    .skill-group-form-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 480px) {
+    .skill-group-form {
+        grid-template-columns: 1fr;
+        padding: 16px;
+    }
+
+    .skill-group-form-description,
+    .skill-group-form-actions {
+        grid-column: 1;
+    }
+}

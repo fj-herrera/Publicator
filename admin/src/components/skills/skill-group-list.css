@@ -1,0 +1,70 @@
+.skill-group-data-grid .data-grid .MuiTableBody-root .MuiTableRow-root,
+.skill-group-data-grid .data-grid .MuiTableBody-root .MuiTableCell-root {
+    height: 146px;
+}
+
+.skill-group-data-grid .data-grid .MuiTableBody-root .MuiTableCell-root {
+    white-space: normal;
+    vertical-align: middle;
+}
+
+.skill-group-data-grid .skill-group-name-column {
+    width: 280px;
+    min-width: 240px;
+}
+
+.skill-group-name-cell {
+    display: flex;
+    max-width: 250px;
+    flex-direction: column;
+    gap: 6px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.skill-group-name-cell strong {
+    font-weight: 700;
+}
+
+.skill-group-name-cell span {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    color: #424242;
+    line-height: 1.45;
+}
+
+.skill-group-data-grid .skill-group-skills-column {
+    min-width: 420px;
+}
+
+.skill-group-skills .object-chips {
+    display: flex;
+    min-height: 0;
+    align-content: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+}
+
+.skill-group-skills .object-chip.MuiChip-root {
+    height: 30px;
+}
+
+.skill-group-empty-skills {
+    color: #6b6375;
+}
+
+.skill-group-actions {
+    flex-direction: column;
+    gap: 4px;
+}
+
+@media (max-width: 600px) {
+    .skill-group-data-grid .skill-group-skills-column {
+        min-width: 280px;
+    }
+}

@@ -1,11 +1,13 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateSkillGroupDto {
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    publicationSkillsId: number;
+    @MaxLength(100)
+    name: string;
 
-    @IsInt()
-    @IsNotEmpty()
-    skillId: number;
+    @IsOptional()
+    @IsString()
+    @MaxLength(2000)
+    description?: string | null;
 }

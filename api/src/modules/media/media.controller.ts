@@ -51,6 +51,19 @@ function imageFileFilter(
   callback(null, true)
 }
 
+function svgFileFilter(
+  _request: Request,
+  file: Express.Multer.File,
+  callback: (error: Error | null, acceptFile: boolean) => void,
+) {
+  if (file.mimetype !== 'image/svg+xml') {
+    callback(new BadRequestException('Choose an SVG image.'), false)
+    return
+  }
+
+  callback(null, true)
+}
+
 @Controller('media')
 export class MediaController {
   @Post('clients/logos')
@@ -78,5 +91,32 @@ export class MediaController {
     }
 
     return { url: `/media/clients/${file.filename}` }
+  }
+
+  @Post('skills/icons')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (_request, _file, callback) => {
+        const skillIconDirectory = join(mediaDirectory, 'skills', 'icons')
+        try {
+          mkdirSync(skillIconDirectory, { recursive: true })
+          callback(null, skillIconDirectory)
+        } catch (error) {
+          callback(error as Error, skillIconDirectory)
+        }
+      },
+      filename: (_request, file, callback) => {
+        callback(null, createStoredFilename(file))
+      },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: svgFileFilter,
+  }))
+  uploadSkillIcon(@UploadedFile() file?: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('An SVG icon is required.')
+    }
+
+    return { url: `/media/skills/icons/${file.filename}` }
   }
 }

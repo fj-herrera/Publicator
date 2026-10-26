@@ -15,11 +15,12 @@
     items: TabItem[]
     value: string
     onChange: (value: string) => void
-    onCreate: () => void
+    onCreate?: () => void
+    createDisabled?: boolean
     createLabels: Record<string, string>
   }
 
-  function SectionTabs({ items, value, onChange, onCreate, createLabels }: SectionTabsProps) {
+  function SectionTabs({ items, value, onChange, onCreate, createDisabled = false, createLabels }: SectionTabsProps) {
     return (
       <div className="section-tabs-container">
         <Tabs
@@ -38,7 +39,11 @@
           ))}
         </Tabs>
 
-        <Button onClick={onCreate} startIcon={<AddIcon />}>
+        <Button
+          onClick={onCreate}
+          disabled={!onCreate || createDisabled}
+          startIcon={<AddIcon />}
+        >
           {createLabels[value] ?? 'Create'}
         </Button>
       </div>

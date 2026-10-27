@@ -9,5 +9,6 @@ import { Dimensions } from '../dimensions/entities/dimensions.entity.js';
   imports: [TypeOrmModule.forFeature([Asset, Dimensions])],
   controllers: [AssetController],
   providers: [AssetService],
+  exports: [AssetService],
 })
 export class AssetModule {}

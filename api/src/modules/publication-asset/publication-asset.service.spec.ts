@@ -71,7 +71,9 @@ describe('PublicationAssetService', () => {
     await expect(service.findAll()).resolves.toBe(associations);
     expect(publicationAssetRepository.find).toHaveBeenCalledWith({
       relations: {
-        publication: true,
+        publication: {
+          meta: true,
+        },
         asset: true,
       },
     });

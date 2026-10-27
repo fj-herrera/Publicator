@@ -69,7 +69,9 @@ export class PublicationAssetService {
   async findAll(): Promise<PublicationAsset[]> {
     return this.publicationAssetRepository.find({
       relations: {
-        publication: true,
+        publication: {
+          meta: true,
+        },
         asset: true,
       },
     });

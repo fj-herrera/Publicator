@@ -44,6 +44,7 @@ export class AssetService {
       const asset = this.assetRepository.create({
         ...data,
         dimensions,
+        uploadedAt: new Date(),
       });
 
       return await this.assetRepository.save(asset);
@@ -105,6 +106,10 @@ export class AssetService {
 
     if (updateAssetDto.type !== undefined) {
       asset.type = updateAssetDto.type;
+    }
+
+    if (updateAssetDto.name !== undefined) {
+      asset.name = updateAssetDto.name;
     }
 
     if (updateAssetDto.url !== undefined) {

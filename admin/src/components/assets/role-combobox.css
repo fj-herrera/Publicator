@@ -1,0 +1,83 @@
+.asset-role-combobox {
+    position: relative;
+    display: flex;
+    flex: 0 1 220px;
+    width: min(220px, 45%);
+    min-width: 0;
+}
+
+.asset-role-combobox input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 6px 34px 6px 8px;
+    border: 1px solid #aeb8bf;
+    border-radius: 3px;
+    color: #283035;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+}
+
+.asset-role-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    width: 34px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    color: #596268;
+    background: transparent;
+    cursor: pointer;
+}
+
+.asset-role-toggle:disabled {
+    cursor: not-allowed;
+}
+
+.asset-role-toggle svg {
+    width: 22px;
+    height: 22px;
+}
+
+.asset-role-options {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    display: grid;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #d5d9dc;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 16%);
+}
+
+.asset-role-options button {
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 0;
+    color: #30373b;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.asset-role-options button:hover,
+.asset-role-options button.asset-role-option-active {
+    background: #edf5fb;
+}
+
+.asset-upload-field .asset-role-combobox {
+    grid-column: 1 / -1;
+    flex: none;
+    width: 100%;
+}

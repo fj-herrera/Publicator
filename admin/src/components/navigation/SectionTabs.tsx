@@ -9,6 +9,7 @@
     label: string
     value: string
     icon: ReactElement
+    disabled?: boolean
   }
 
   type SectionTabsProps = {
@@ -35,6 +36,7 @@
               value={item.value}
               icon={item.icon}
               iconPosition="start"
+              disabled={item.disabled}
             />
           ))}
         </Tabs>

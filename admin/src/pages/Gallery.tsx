@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import AddIcon from '@mui/icons-material/Add'
+import { useEffect, useRef, useState } from 'react'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
+import CollectionsIcon from '@mui/icons-material/Collections'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
@@ -10,16 +10,22 @@ import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutl
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import SectionTabs from '../components/navigation/SectionTabs'
 import AssetUploadForm from '../components/assets/AssetUploadForm'
+import PublicationRelationDrafts from '../components/assets/PublicationRelationDrafts'
 import RoleCombobox from '../components/assets/RoleCombobox'
 import type {
   Asset,
   AssetCollectionRelation,
+  PublicationAssetTarget,
   PublicationAssetRelation,
 } from '../entities/asset'
+import type { PublicationRelationDraft } from '../components/assets/PublicationRelationDrafts'
 import {
+  createPublicationAsset,
   getAssetCollections,
   getAssets,
+  getPublications,
   getPublicationAssets,
   updateAssetName,
   updatePublicationAssetRole,
@@ -100,7 +106,9 @@ function escapeCsv(value: string) {
 }
 
 function Gallery() {
+  const [activeGalleryTab, setActiveGalleryTab] = useState('assets')
   const [assets, setAssets] = useState<Asset[]>([])
+  const [publications, setPublications] = useState<PublicationAssetTarget[]>([])
   const [relations, setRelations] = useState<Record<number, AssetRelations>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
@@ -110,12 +118,14 @@ function Gallery() {
   const [isEditingAsset, setIsEditingAsset] = useState(false)
   const [editedAssetName, setEditedAssetName] = useState('')
   const [editedPublicationRoles, setEditedPublicationRoles] = useState<Record<number, string>>({})
+  const [newPublicationRelations, setNewPublicationRelations] = useState<PublicationRelationDraft[]>([])
   const [isSavingAsset, setIsSavingAsset] = useState(false)
   const [assetEditError, setAssetEditError] = useState('')
   const [actionAsset, setActionAsset] = useState<Asset | null>(null)
   const [isCreateAssetOpen, setIsCreateAssetOpen] = useState(false)
   const [failedPreviews, setFailedPreviews] = useState<Set<number>>(() => new Set())
   const [retryCount, setRetryCount] = useState(0)
+  const nextPublicationRelationKey = useRef(0)
 
   useEffect(() => {
     let isCurrent = true
@@ -125,10 +135,11 @@ function Gallery() {
       setError('')
 
       try {
-        const [loadedAssets, publicationRelations, collectionRelations] = await Promise.all([
+        const [loadedAssets, publicationRelations, collectionRelations, loadedPublications] = await Promise.all([
           getAssets(),
           getPublicationAssets(),
           getAssetCollections(),
+          getPublications(),
         ])
         const nextRelations: Record<number, AssetRelations> = {}
 
@@ -141,6 +152,7 @@ function Gallery() {
 
         if (isCurrent) {
           setAssets(loadedAssets)
+          setPublications(loadedPublications)
           setRelations(nextRelations)
           setFailedPreviews(new Set())
         }
@@ -195,12 +207,14 @@ function Gallery() {
     setEditedPublicationRoles(Object.fromEntries(
       (relations[asset.id]?.publications ?? []).map((relation) => [relation.id, relation.role]),
     ))
+    setNewPublicationRelations([])
     setAssetEditError('')
   }
 
   const cancelAssetEdit = () => {
     setSelectedAsset(null)
     setIsEditingAsset(false)
+    setNewPublicationRelations([])
     setAssetEditError('')
   }
 
@@ -230,6 +244,32 @@ function Gallery() {
       return
     }
 
+    if (newPublicationRelations.some((relation) => (
+      !relation.publicationId || !relation.role.trim() || relation.role.trim().length > 50
+    ))) {
+      setAssetEditError('Choose a publication and a role for each new relation.')
+      return
+    }
+
+    const relationKeys = new Set<string>()
+    for (const relation of publicationRelations) {
+      const key = `${relation.publication.id}:${trimmedRoles[relation.id].toLowerCase()}`
+      if (relationKeys.has(key)) {
+        setAssetEditError('This publication cannot have duplicate roles for the same asset.')
+        return
+      }
+      relationKeys.add(key)
+    }
+
+    for (const relation of newPublicationRelations) {
+      const key = `${relation.publicationId}:${relation.role.trim().toLowerCase()}`
+      if (relationKeys.has(key)) {
+        setAssetEditError('This publication already has an association with that role.')
+        return
+      }
+      relationKeys.add(key)
+    }
+
     setIsSavingAsset(true)
     setAssetEditError('')
 
@@ -238,27 +278,79 @@ function Gallery() {
       const changedRoles = publicationRelations.filter(
         (relation) => trimmedRoles[relation.id] !== relation.role,
       )
-      await Promise.all(changedRoles.map((relation) => (
+      const roleResults = await Promise.allSettled(changedRoles.map((relation) => (
         updatePublicationAssetRole(relation.id, trimmedRoles[relation.id])
       )))
+      const relationResults = await Promise.allSettled(newPublicationRelations.map((relation) => (
+        createPublicationAsset(
+          selectedAsset.id,
+          Number(relation.publicationId),
+          relation.role.trim(),
+        )
+      )))
       const assetWithDetails = { ...selectedAsset, ...updatedAsset }
+      const savedRoles: Record<number, string> = {}
+      changedRoles.forEach((relation, index) => {
+        if (roleResults[index].status === 'fulfilled') {
+          savedRoles[relation.id] = trimmedRoles[relation.id]
+        }
+      })
+      const savedRelations: PublicationAssetRelation[] = []
+      const failedDraftKeys = new Set<number>()
+      relationResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          failedDraftKeys.add(newPublicationRelations[index].key)
+          return
+        }
+
+        const createdRelation = result.value as PublicationAssetRelation
+        const publication = publications.find(
+          (item) => item.id === Number(newPublicationRelations[index].publicationId),
+        )
+        if (publication) {
+          savedRelations.push({
+            ...createdRelation,
+            publication: { ...createdRelation.publication, ...publication },
+          })
+        }
+      })
+      const hasSaveFailures = roleResults.some((result) => result.status === 'rejected')
+        || relationResults.some((result) => result.status === 'rejected')
 
       setAssets((currentAssets) => currentAssets.map((asset) => (
         asset.id === selectedAsset.id ? assetWithDetails : asset
       )))
-      setRelations((currentRelations) => ({
-        ...currentRelations,
-        [selectedAsset.id]: {
-          ...currentRelations[selectedAsset.id],
-          publications: publicationRelations.map((relation) => ({
-            ...relation,
-            role: trimmedRoles[relation.id],
-          })),
-        },
-      }))
+      setRelations((currentRelations) => {
+        const currentAssetRelations = currentRelations[selectedAsset.id]
+          ?? { publications: [], collections: [] }
+
+        return {
+          ...currentRelations,
+          [selectedAsset.id]: {
+            ...currentAssetRelations,
+            publications: [
+              ...publicationRelations.map((relation) => ({
+                ...relation,
+                role: savedRoles[relation.id] ?? relation.role,
+              })),
+              ...savedRelations,
+            ],
+          },
+        }
+      })
       setSelectedAsset(assetWithDetails)
       setEditedAssetName(trimmedName)
-      setIsEditingAsset(false)
+      setEditedPublicationRoles((currentRoles) => ({ ...currentRoles, ...savedRoles }))
+      setNewPublicationRelations((currentDrafts) => currentDrafts.filter(
+        (draft) => failedDraftKeys.has(draft.key),
+      ))
+      if (hasSaveFailures) {
+        setAssetEditError('Some changes were saved. Review the remaining fields and save again.')
+      } else {
+        setIsEditingAsset(false)
+        setSelectedAsset(null)
+        setNewPublicationRelations([])
+      }
     } catch (saveError) {
       setAssetEditError(getErrorMessage(saveError, 'Could not save asset changes. You can retry.'))
     } finally {
@@ -293,29 +385,22 @@ function Gallery() {
   return (
     <main className="gallery-page">
       <header className="gallery-header">
-        <div className="gallery-tab-row">
-          <nav className="gallery-tabs" aria-label="Gallery sections">
-            <button className="gallery-tab" type="button" disabled>
-              <span className="gallery-tab-grid" aria-hidden="true">▦</span>
-              Collections
-            </button>
-            <button className="gallery-tab gallery-tab-active" type="button" aria-current="page">
-              <ImageOutlinedIcon aria-hidden="true" />
-              Assets
-            </button>
-          </nav>
-          <button
-            className="gallery-create-button"
-            onClick={() => {
+        <SectionTabs
+          value={activeGalleryTab}
+          onChange={setActiveGalleryTab}
+          items={[
+            { label: 'Collections', value: 'collections', icon: <CollectionsIcon />, disabled: true },
+            { label: 'Assets', value: 'assets', icon: <ImageOutlinedIcon /> },
+          ]}
+          createLabels={{ assets: 'Create Asset', collections: 'Create Collection' }}
+          createDisabled={activeGalleryTab !== 'assets'}
+          onCreate={() => {
+            if (activeGalleryTab === 'assets') {
               setSelectedAsset(null)
               setIsCreateAssetOpen((isOpen) => !isOpen)
-            }}
-            type="button"
-          >
-            <AddIcon aria-hidden="true" />
-            Create Asset
-          </button>
-        </div>
+            }
+          }}
+        />
         {isCreateAssetOpen && (
           <AssetUploadForm
             collectionRoles={collectionRoles}
@@ -440,6 +525,29 @@ function Gallery() {
                   ))}
                 </ul>
               ) : <p>No publication associations.</p>}
+              {isEditingAsset && (
+                <PublicationRelationDrafts
+                  drafts={newPublicationRelations}
+                  onAdd={() => setNewPublicationRelations((currentRelations) => ([
+                    ...currentRelations,
+                    {
+                      key: nextPublicationRelationKey.current++,
+                      publicationId: '',
+                      role: '',
+                    },
+                  ]))}
+                  onChange={(key, changes) => setNewPublicationRelations((currentRelations) => (
+                    currentRelations.map((relation) => (
+                      relation.key === key ? { ...relation, ...changes } : relation
+                    ))
+                  ))}
+                  onRemove={(key) => setNewPublicationRelations((currentRelations) => (
+                    currentRelations.filter((relation) => relation.key !== key)
+                  ))}
+                  publications={publications}
+                  roles={publicationRoles}
+                />
+              )}
               <h3>Collection relations</h3>
               {relations[selectedAsset.id]?.collections.length ? (
                 <ul>

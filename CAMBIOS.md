@@ -17,6 +17,7 @@
 
 - `Asset` conserva `type`, `url` y la relación opcional con `Dimensions`, y añade `name`, `mimeType`, `sizeBytes` y `uploadedAt` para guardar el nombre original, el MIME detectado, el tamaño y la fecha de alta.
 - Los campos nuevos son nullable para mantener compatibles los assets creados antes de esta ampliación.
+- En la subida, las dimensiones de archivos de imagen se leen del binario. El sistema reutiliza la entrada `Dimensions` existente para ese ancho y alto, o la crea si no existe, y asocia el asset al registro. No se piden como dato manual; quedan como metadata de consulta para el front público. Otros formatos quedan sin dimensiones detectadas.
 - `Asset.type` se obtiene del MIME y clasifica el archivo como `Image`, `Video`, `Audio` o `Document`. No representa el uso del recurso en el contenido.
 - Se admiten SVG, JPG/JPEG, PNG, WebP, GIF, MP4, WebM, MP3, WAV, OGG y PDF. La subida múltiple admite hasta 50 archivos por petición y limita cada archivo a 100 MB.
 - `POST /media/assets` recibe los archivos en el campo multipart `files`, guarda cada uno en `media/assets/` y crea un registro global de `Asset` por archivo. `Asset.url` contiene la ruta pública y el archivo queda disponible bajo `/media/assets/`.

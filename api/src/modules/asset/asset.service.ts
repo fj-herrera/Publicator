@@ -21,6 +21,34 @@ export class AssetService {
     private readonly dimensionsRepository: Repository<Dimensions>,
   ) {}
 
+  async findOrCreateDimensions(width: number, height: number): Promise<Dimensions> {
+    const existingDimensions = await this.dimensionsRepository.findOneBy({ width, height });
+    if (existingDimensions) {
+      return existingDimensions;
+    }
+
+    try {
+      const dimensions = this.dimensionsRepository.create({ width, height });
+      return await this.dimensionsRepository.save(dimensions);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        error.code === '23505'
+      ) {
+        const dimensionsCreatedConcurrently = await this.dimensionsRepository.findOneBy({
+          width,
+          height,
+        });
+        if (dimensionsCreatedConcurrently) {
+          return dimensionsCreatedConcurrently;
+        }
+      }
+
+      throw error;
+    }
+  }
+
   async create(
     createAssetDto: CreateAssetDto,
   ): Promise<Asset> {

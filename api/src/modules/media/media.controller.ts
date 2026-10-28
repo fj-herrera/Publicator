@@ -14,6 +14,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
 import type { Request } from 'express'
 import { AssetService } from '../asset/asset.service.js'
+import { readAssetImageDimensions } from './asset-image-dimensions.js'
 import { assetFileTypes, getAssetFileType } from './asset-file-types.js'
 import { mediaDirectory } from './local-media-storage.js'
 
@@ -113,12 +114,22 @@ export class MediaController {
 
     try {
       for (const file of files) {
+        const imageDimensions = getAssetFileType(file.mimetype) === 'Image'
+          ? await readAssetImageDimensions(file.path)
+          : null
+        const dimensions = imageDimensions
+          ? await this.assetService.findOrCreateDimensions(
+            imageDimensions.width,
+            imageDimensions.height,
+          )
+          : null
         const createdAsset = await this.assetService.create({
           type: getAssetFileType(file.mimetype)!,
           url: `/media/assets/${file.filename}`,
           name: file.originalname,
           mimeType: file.mimetype,
           sizeBytes: file.size,
+          ...(dimensions ? { dimensionsId: dimensions.id } : {}),
         })
         createdAssets.push(createdAsset)
       }

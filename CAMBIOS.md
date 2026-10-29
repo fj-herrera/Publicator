@@ -27,3 +27,14 @@
 - La migración `1793131976006-AddAssetFileMetadata` añade las columnas nullable `name`, `mime_type` y `size_bytes`. La migración `1793131976007-AddAssetUploadedAt` añade `uploaded_at`. Ambas conservan los datos existentes; los assets anteriores sin fecha permanecen con `uploaded_at` nulo.
 
 **Estado de las migraciones:** ambas ejecutadas en el entorno de desarrollo actual.
+
+## Gallery Collections
+
+- `Collection.position` define el orden de las colecciones dentro de su publicación y es único por publicación.
+- `AssetCollection.position` define el orden de los assets dentro de su colección y es único por colección; `AssetCollection.role` sigue describiendo la función del asset.
+- La migración `1793299056506-AddCollectionAndAssetPositions` rellena las posiciones existentes en orden de id antes de aplicar las restricciones únicas diferidas. Se ejecutó en el entorno de desarrollo actual.
+- Crear una colección o una asociación de asset asigna la siguiente posición. Los endpoints `PATCH /collections/order` y `PATCH /asset-collections/order` reciben la lista completa de ids y actualizan el orden en una transacción.
+- Borrar una colección elimina primero sus relaciones `AssetCollection`, conserva los assets y sus otras relaciones, y cierra el hueco de posiciones de la publicación. Retirar un asset de una colección elimina solo esa relación y renumera la colección.
+- `GET /collections` devuelve publication, metadata y cliente para el listado y sus filtros.
+- El admin habilita Gallery → Collections: filtros por publicación, contexto, tipo y cliente; vista previa en mosaico de hasta cuatro imágenes; creación, edición, reordenación y eliminación confirmada.
+- Los tipos de colección siguen siendo texto libre; no se introduce un catálogo independiente.

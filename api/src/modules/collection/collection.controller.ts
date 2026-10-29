@@ -11,6 +11,7 @@ import {
 import { CollectionService } from './collection.service.js';
 import { CreateCollectionDto } from './dto/create-collection.dto.js';
 import { UpdateCollectionDto } from './dto/update-collection.dto.js';
+import { ReorderCollectionsDto } from './dto/reorder-collections.dto.js';
 
 @Controller('collections')
 export class CollectionController {
@@ -31,6 +32,11 @@ export class CollectionController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.collectionService.findOne(id);
+  }
+
+  @Patch('order')
+  reorder(@Body() reorderCollectionsDto: ReorderCollectionsDto) {
+    return this.collectionService.reorder(reorderCollectionsDto);
   }
 
   @Patch(':id')

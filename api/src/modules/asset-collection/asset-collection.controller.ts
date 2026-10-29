@@ -11,6 +11,7 @@ import {
 import { AssetCollectionService } from './asset-collection.service.js';
 import { CreateAssetCollectionDto } from './dto/create-asset-collection.dto.js';
 import { UpdateAssetCollectionDto } from './dto/update-asset-collection.dto.js';
+import { ReorderAssetCollectionsDto } from './dto/reorder-asset-collections.dto.js';
 
 @Controller('asset-collections')
 export class AssetCollectionController {
@@ -35,6 +36,11 @@ export class AssetCollectionController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.assetCollectionService.findOne(id);
+  }
+
+  @Patch('order')
+  reorder(@Body() reorderAssetCollectionsDto: ReorderAssetCollectionsDto) {
+    return this.assetCollectionService.reorder(reorderAssetCollectionsDto);
   }
 
   @Patch(':id')

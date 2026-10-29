@@ -45,6 +45,24 @@ export const apiMessages = {
     addFailed: 'Unable to add skill to group.',
     removeFailed: 'Unable to remove skill from group.',
   },
+  assetTexts: {
+    loadFailed: 'Unable to load asset texts.',
+    createFailed: 'Unable to create text.',
+    updateFailed: 'Unable to update text.',
+    deleteFailed: 'Unable to delete text.',
+    usageCheckFailed: 'Unable to check whether this text is shared.',
+  },
+  collections: {
+    loadFailed: 'Unable to load collections.',
+    createFailed: 'Unable to create collection.',
+    updateFailed: 'Unable to update collection.',
+    deleteFailed: 'Unable to delete collection.',
+    reorderFailed: 'Unable to change the order.',
+    assetFailed: 'Unable to update the collection assets.',
+    deleteConfirmation: (position: number, publication: string) => (
+      `Are you sure you want to delete collection ${position} of "${publication}"? Its assets will stay in the gallery.`
+    ),
+  },
   catalog: {
     created: (itemLabel: string) => `${itemLabel} created successfully.`,
     deleted: (itemLabel: string) => `${itemLabel} deleted successfully.`,

@@ -11,6 +11,8 @@ import { Asset } from '../../asset/entities/asset.entity.js';
 
 @Entity()
 @Unique(['collection', 'asset', 'role'])
+// Deferred so a reorder can swap positions inside one transaction.
+@Unique(['collection', 'position'], { deferrable: 'INITIALLY DEFERRED' })
 export class AssetCollection {
     @PrimaryGeneratedColumn('identity', {
         generatedIdentity: 'ALWAYS',
@@ -22,6 +24,12 @@ export class AssetCollection {
         nullable: false,
     })
     role: string;
+
+    @Column({
+        type: 'integer',
+        nullable: false,
+    })
+    position: number;
 
     @ManyToOne(() => Collection, {
         nullable: false,

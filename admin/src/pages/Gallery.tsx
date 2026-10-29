@@ -11,7 +11,16 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import SectionTabs from '../components/navigation/SectionTabs'
+import AssetTextsEditor from '../components/assets/AssetTextsEditor'
 import AssetUploadForm from '../components/assets/AssetUploadForm'
+import {
+  formatFileSize,
+  getAssetName,
+  getFileFormat,
+  getPreviewUrl,
+  isPreviewableImage,
+} from '../components/assets/asset-utils'
+import Collections from '../views/Collections'
 import PublicationRelationDrafts from '../components/assets/PublicationRelationDrafts'
 import RoleCombobox from '../components/assets/RoleCombobox'
 import type {
@@ -21,6 +30,8 @@ import type {
   PublicationAssetRelation,
 } from '../entities/asset'
 import type { PublicationRelationDraft } from '../components/assets/PublicationRelationDrafts'
+import type { AssetText, AssetTextDraft } from '../entities/asset-text'
+import { getAssetTexts, saveAssetTextDrafts } from '../services/asset-texts.service'
 import {
   createPublicationAsset,
   getAssetCollections,
@@ -38,27 +49,6 @@ type AssetRelations = {
   collections: AssetCollectionRelation[]
 }
 
-function getFileName(url: string) {
-  const path = url.split(/[?#]/, 1)[0]
-  const fileName = path.split('/').pop() || url
-
-  try {
-    return decodeURIComponent(fileName)
-  } catch {
-    return fileName
-  }
-}
-
-function getFileFormat(url: string) {
-  const fileName = getFileName(url)
-  const extension = fileName.split('.').pop()
-  return extension && extension !== fileName ? extension.toUpperCase() : 'FILE'
-}
-
-function getAssetName(asset: Asset) {
-  return asset.name?.trim() || getFileName(asset.url)
-}
-
 function formatUploadDate(value?: string | null) {
   if (!value) {
     return 'Not available'
@@ -71,22 +61,6 @@ function formatUploadDate(value?: string | null) {
       dateStyle: 'short',
       timeStyle: 'short',
     }).format(date)
-}
-
-function formatFileSize(size: number) {
-  if (size < 1024 * 1024) {
-    return `${Math.max(1, Math.round(size / 1024))} KB`
-  }
-
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function getPreviewUrl(url: string) {
-  if (/^(https?:)?\/\//i.test(url) || url.startsWith('/')) {
-    return url
-  }
-
-  return `/media/${url}`
 }
 
 function getRelationLabel(relation: PublicationAssetRelation | AssetCollectionRelation) {
@@ -105,8 +79,18 @@ function escapeCsv(value: string) {
   return `"${value.replace(/"/g, '""')}"`
 }
 
+function toTextDraft(assetText: AssetText, key: number): AssetTextDraft {
+  return {
+    key,
+    id: assetText.id,
+    role: assetText.type,
+    text: assetText.text.text,
+    isRemoved: false,
+  }
+}
+
 function Gallery() {
-  const [activeGalleryTab, setActiveGalleryTab] = useState('assets')
+  const [activeGalleryTab, setActiveGalleryTab] = useState('collections')
   const [assets, setAssets] = useState<Asset[]>([])
   const [publications, setPublications] = useState<PublicationAssetTarget[]>([])
   const [relations, setRelations] = useState<Record<number, AssetRelations>>({})
@@ -119,13 +103,25 @@ function Gallery() {
   const [editedAssetName, setEditedAssetName] = useState('')
   const [editedPublicationRoles, setEditedPublicationRoles] = useState<Record<number, string>>({})
   const [newPublicationRelations, setNewPublicationRelations] = useState<PublicationRelationDraft[]>([])
+  const [assetTexts, setAssetTexts] = useState<Record<number, AssetText[]>>({})
+  const [assetTextDrafts, setAssetTextDrafts] = useState<AssetTextDraft[]>([])
   const [isSavingAsset, setIsSavingAsset] = useState(false)
   const [assetEditError, setAssetEditError] = useState('')
   const [actionAsset, setActionAsset] = useState<Asset | null>(null)
   const [isCreateAssetOpen, setIsCreateAssetOpen] = useState(false)
+  const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(false)
   const [failedPreviews, setFailedPreviews] = useState<Set<number>>(() => new Set())
   const [retryCount, setRetryCount] = useState(0)
   const nextPublicationRelationKey = useRef(0)
+  const nextAssetTextKey = useRef(0)
+
+  const groupAssetTexts = (items: AssetText[]) => {
+    const grouped: Record<number, AssetText[]> = {}
+    items.forEach((item) => {
+      grouped[item.asset.id] = [...(grouped[item.asset.id] ?? []), item]
+    })
+    return grouped
+  }
 
   useEffect(() => {
     let isCurrent = true
@@ -135,11 +131,18 @@ function Gallery() {
       setError('')
 
       try {
-        const [loadedAssets, publicationRelations, collectionRelations, loadedPublications] = await Promise.all([
+        const [
+          loadedAssets,
+          publicationRelations,
+          collectionRelations,
+          loadedPublications,
+          loadedAssetTexts,
+        ] = await Promise.all([
           getAssets(),
           getPublicationAssets(),
           getAssetCollections(),
           getPublications(),
+          getAssetTexts(),
         ])
         const nextRelations: Record<number, AssetRelations> = {}
 
@@ -153,6 +156,7 @@ function Gallery() {
         if (isCurrent) {
           setAssets(loadedAssets)
           setPublications(loadedPublications)
+          setAssetTexts(groupAssetTexts(loadedAssetTexts))
           setRelations(nextRelations)
           setFailedPreviews(new Set())
         }
@@ -181,6 +185,9 @@ function Gallery() {
   const collectionRoles = Array.from(new Set(
     Object.values(relations).flatMap(({ collections: items }) => items.map(({ role }) => role)),
   )).sort()
+  const assetTextRoles = Array.from(new Set(
+    Object.values(assetTexts).flatMap((items) => items.map(({ type }) => type)),
+  )).sort()
   const normalizedQuery = query.trim().toLowerCase()
   const visibleAssets = assets.filter((asset) => {
     const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
@@ -208,6 +215,9 @@ function Gallery() {
       (relations[asset.id]?.publications ?? []).map((relation) => [relation.id, relation.role]),
     ))
     setNewPublicationRelations([])
+    setAssetTextDrafts((assetTexts[asset.id] ?? []).map(
+      (assetText) => toTextDraft(assetText, nextAssetTextKey.current++),
+    ))
     setAssetEditError('')
   }
 
@@ -215,8 +225,26 @@ function Gallery() {
     setSelectedAsset(null)
     setIsEditingAsset(false)
     setNewPublicationRelations([])
+    setAssetTextDrafts([])
     setAssetEditError('')
   }
+
+  const changeAssetTextDraft = (
+    key: number,
+    changes: Partial<Pick<AssetTextDraft, 'role' | 'text'>>,
+  ) => setAssetTextDrafts((drafts) => drafts.map((draft) => (
+    draft.key === key ? { ...draft, ...changes, error: undefined } : draft
+  )))
+
+  const removeAssetTextDraft = (key: number) => setAssetTextDrafts((drafts) => (
+    drafts
+      .filter((draft) => draft.id !== null || draft.key !== key)
+      .map((draft) => (draft.key === key ? { ...draft, isRemoved: true, error: undefined } : draft))
+  ))
+
+  const restoreAssetTextDraft = (key: number) => setAssetTextDrafts((drafts) => drafts.map(
+    (draft) => (draft.key === key ? { ...draft, isRemoved: false } : draft),
+  ))
 
   const saveAssetEdit = async () => {
     if (!selectedAsset) {
@@ -248,6 +276,17 @@ function Gallery() {
       !relation.publicationId || !relation.role.trim() || relation.role.trim().length > 50
     ))) {
       setAssetEditError('Choose a publication and a role for each new relation.')
+      return
+    }
+
+    const activeTextDrafts = assetTextDrafts.filter((draft) => !draft.isRemoved)
+    if (activeTextDrafts.some((draft) => !draft.role.trim() || !draft.text.trim())) {
+      setAssetEditError('Every text needs a role and some content.')
+      return
+    }
+
+    if (activeTextDrafts.some((draft) => draft.role.trim().length > 50)) {
+      setAssetEditError('Text roles can contain up to 50 characters.')
       return
     }
 
@@ -314,7 +353,22 @@ function Gallery() {
           })
         }
       })
-      const hasSaveFailures = roleResults.some((result) => result.status === 'rejected')
+      const currentAssetTexts = assetTexts[selectedAsset.id] ?? []
+      const textFailures = await saveAssetTextDrafts(
+        selectedAsset.id,
+        assetTextDrafts,
+        currentAssetTexts,
+      )
+      let refreshedAssetTexts: AssetText[] | null = null
+      try {
+        refreshedAssetTexts = (await getAssetTexts())
+          .filter((item) => item.asset.id === selectedAsset.id)
+      } catch {
+        // The saved texts stay in the editor; the list refreshes on the next load.
+      }
+      const hasTextFailures = textFailures.size > 0 || refreshedAssetTexts === null
+      const hasSaveFailures = hasTextFailures
+        || roleResults.some((result) => result.status === 'rejected')
         || relationResults.some((result) => result.status === 'rejected')
 
       setAssets((currentAssets) => currentAssets.map((asset) => (
@@ -344,17 +398,48 @@ function Gallery() {
       setNewPublicationRelations((currentDrafts) => currentDrafts.filter(
         (draft) => failedDraftKeys.has(draft.key),
       ))
-      if (hasSaveFailures) {
+      if (refreshedAssetTexts) {
+        const failedDrafts = assetTextDrafts
+          .filter((draft) => textFailures.has(draft.key))
+          .map((draft) => ({ ...draft, error: textFailures.get(draft.key) }))
+        const failedIds = new Set(failedDrafts.map((draft) => draft.id))
+        setAssetTexts((currentTexts) => ({ ...currentTexts, [selectedAsset.id]: refreshedAssetTexts }))
+        setAssetTextDrafts([
+          ...refreshedAssetTexts
+            .filter((item) => !failedIds.has(item.id))
+            .map((item) => toTextDraft(item, nextAssetTextKey.current++)),
+          ...failedDrafts,
+        ])
+      } else {
+        // Without a refresh the saved state is unknown, so report failures on the unsaved drafts.
+        setAssetTextDrafts((drafts) => drafts.map((draft) => (
+          textFailures.has(draft.key) ? { ...draft, error: textFailures.get(draft.key) } : draft
+        )))
+      }
+      if (refreshedAssetTexts === null) {
+        setAssetEditError('Texts were saved, but the list could not be refreshed. Reload the gallery before editing them again.')
+      } else if (hasSaveFailures) {
         setAssetEditError('Some changes were saved. Review the remaining fields and save again.')
       } else {
         setIsEditingAsset(false)
         setSelectedAsset(null)
         setNewPublicationRelations([])
+        setAssetTextDrafts([])
       }
     } catch (saveError) {
       setAssetEditError(getErrorMessage(saveError, 'Could not save asset changes. You can retry.'))
     } finally {
       setIsSavingAsset(false)
+    }
+  }
+
+  const isAssetsTab = activeGalleryTab === 'assets'
+
+  const handleGalleryTabChange = (tab: string) => {
+    setActiveGalleryTab(tab)
+    // Collections can change the associations shown on each asset.
+    if (tab === 'assets') {
+      setRetryCount((count) => count + 1)
     }
   }
 
@@ -387,21 +472,22 @@ function Gallery() {
       <header className="gallery-header">
         <SectionTabs
           value={activeGalleryTab}
-          onChange={setActiveGalleryTab}
+          onChange={handleGalleryTabChange}
           items={[
-            { label: 'Collections', value: 'collections', icon: <CollectionsIcon />, disabled: true },
+            { label: 'Collections', value: 'collections', icon: <CollectionsIcon /> },
             { label: 'Assets', value: 'assets', icon: <ImageOutlinedIcon /> },
           ]}
           createLabels={{ assets: 'Create Asset', collections: 'Create Collection' }}
-          createDisabled={activeGalleryTab !== 'assets'}
           onCreate={() => {
-            if (activeGalleryTab === 'assets') {
+            if (isAssetsTab) {
               setSelectedAsset(null)
               setIsCreateAssetOpen((isOpen) => !isOpen)
+            } else {
+              setIsCreateCollectionOpen(true)
             }
           }}
         />
-        {isCreateAssetOpen && (
+        {isAssetsTab && isCreateAssetOpen && (
           <AssetUploadForm
             collectionRoles={collectionRoles}
             onCancel={() => setIsCreateAssetOpen(false)}
@@ -409,6 +495,7 @@ function Gallery() {
             publicationRoles={publicationRoles}
           />
         )}
+        {isAssetsTab && (
         <div className="gallery-controls">
           <label className="gallery-search">
             <SearchIcon aria-hidden="true" />
@@ -442,9 +529,18 @@ function Gallery() {
             <DownloadIcon aria-hidden="true" />
           </button>
         </div>
+        )}
       </header>
 
-      {selectedAsset && (
+      {activeGalleryTab === 'collections' && (
+        <Collections
+          isCreateFormOpen={isCreateCollectionOpen}
+          onCreateFormClose={() => setIsCreateCollectionOpen(false)}
+          onCreateFormOpen={() => setIsCreateCollectionOpen(true)}
+        />
+      )}
+
+      {isAssetsTab && selectedAsset && (
         <section aria-labelledby="asset-detail-title" className="asset-detail-panel">
           <header className="asset-detail-header">
             <div>
@@ -469,7 +565,7 @@ function Gallery() {
           >
           <div className="asset-detail-content">
             <div className="asset-detail-preview">
-              {/\.(avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i.test(selectedAsset.url)
+              {isPreviewableImage(selectedAsset.url)
                 && !failedPreviews.has(selectedAsset.id) ? (
                   <img
                     alt={getAssetName(selectedAsset)}
@@ -560,6 +656,24 @@ function Gallery() {
                 </ul>
               ) : <p>No collection associations.</p>}
             </section>
+            <AssetTextsEditor
+              drafts={assetTextDrafts}
+              isEditing={isEditingAsset}
+              onAdd={() => setAssetTextDrafts((drafts) => [
+                ...drafts,
+                {
+                  key: nextAssetTextKey.current++,
+                  id: null,
+                  role: '',
+                  text: '',
+                  isRemoved: false,
+                },
+              ])}
+              onChange={changeAssetTextDraft}
+              onRemove={removeAssetTextDraft}
+              onRestore={restoreAssetTextDraft}
+              roles={assetTextRoles}
+            />
           </div>
           {assetEditError && <p className="asset-detail-error" role="alert">{assetEditError}</p>}
           {isEditingAsset && (
@@ -574,14 +688,14 @@ function Gallery() {
         </section>
       )}
 
-      {error && (
+      {isAssetsTab && error && (
         <div className="gallery-message gallery-error" role="alert">
           <span>{error}</span>
           <button type="button" onClick={() => setRetryCount((count) => count + 1)}>Retry</button>
         </div>
       )}
 
-      {isLoading ? (
+      {!isAssetsTab ? null : isLoading ? (
         <div className="gallery-message" role="status">Loading assets...</div>
       ) : !error && assets.length === 0 ? (
         <div className="gallery-message gallery-empty" role="status">
@@ -600,7 +714,7 @@ function Gallery() {
           {visibleAssets.map((asset) => {
             const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
             const allRelations = [...assetRelations.publications, ...assetRelations.collections]
-            const isImage = /\.(avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i.test(asset.url)
+            const isImage = isPreviewableImage(asset.url)
 
             return (
               <article className="asset-card" key={asset.id}>

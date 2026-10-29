@@ -8,6 +8,7 @@ interface RoleComboboxProps {
   value: string
   options: string[]
   disabled?: boolean
+  createLabel?: string
   onChange: (value: string) => void
 }
 
@@ -17,6 +18,7 @@ function RoleCombobox({
   value,
   options,
   disabled = false,
+  createLabel = 'Create new role',
   onChange,
 }: RoleComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -31,7 +33,7 @@ function RoleCombobox({
   ))
   const visibleOptions = [
     ...filteredOptions.map((option) => ({ value: option, label: option })),
-    ...(canCreateRole ? [{ value: value.trim(), label: `Create new role: ${value.trim()}` }] : []),
+    ...(canCreateRole ? [{ value: value.trim(), label: `${createLabel}: ${value.trim()}` }] : []),
   ]
   const listId = `${id}-options`
 

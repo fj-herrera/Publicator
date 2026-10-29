@@ -1,0 +1,126 @@
+.asset-texts {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.asset-texts h3 {
+    margin: 10px 0 0;
+    color: #333b40;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.asset-texts-empty {
+    margin: 0;
+    color: #717a80;
+    font-size: 13px;
+}
+
+.asset-texts-list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #dfe2e4;
+    list-style: none;
+}
+
+.asset-text-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 9px 10px;
+    border-bottom: 1px solid #e6e8e9;
+    font-size: 13px;
+}
+
+.asset-text-row:last-child {
+    border-bottom: 0;
+}
+
+.asset-text-row-removed .asset-text-input {
+    text-decoration: line-through;
+}
+
+.asset-text-role {
+    flex: 0 0 auto;
+    color: #687177;
+}
+
+.asset-text-content {
+    flex: 1 1 260px;
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #283035;
+    white-space: pre-wrap;
+}
+
+.asset-text-input {
+    box-sizing: border-box;
+    flex: 1 1 260px;
+    min-width: 0;
+    min-height: 36px;
+    padding: 6px 8px;
+    border: 1px solid #aeb8bf;
+    border-radius: 3px;
+    color: #283035;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.asset-text-input:disabled {
+    color: #858d92;
+    background: #f3f4f4;
+}
+
+.asset-text-action {
+    display: grid;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #d5d9dc;
+    border-radius: 3px;
+    color: #596268;
+    background: #fff;
+    cursor: pointer;
+}
+
+.asset-text-action svg {
+    width: 18px;
+    height: 18px;
+}
+
+.asset-text-error {
+    flex: 1 1 100%;
+    margin: 0;
+    color: #9c2d2d;
+    font-size: 13px;
+}
+
+.asset-text-add {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-self: start;
+    gap: 6px;
+    padding: 0 10px;
+    border: 1px solid #c8cdd1;
+    border-radius: 3px;
+    color: #126fc1;
+    background: #fff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.asset-text-add svg {
+    width: 18px;
+    height: 18px;
+}

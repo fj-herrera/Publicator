@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { AssetCollection } from './entities/asset-collection.entity.js';
+import { ReorderAssetCollectionsDto } from './dto/reorder-asset-collections.dto.js';
 import { CreateAssetCollectionDto } from './dto/create-asset-collection.dto.js';
 import { UpdateAssetCollectionDto } from './dto/update-asset-collection.dto.js';
 import { Collection } from '../../modules/collection/entities/collection.entity.js';
@@ -24,6 +25,28 @@ export class AssetCollectionService {
     @InjectRepository(Asset)
     private readonly assetRepository: Repository<Asset>,
   ) {}
+
+  private async nextPosition(collectionId: number): Promise<number> {
+    const last = await this.assetCollectionRepository.maximum('position', {
+      collection: { id: collectionId },
+    });
+
+    return (last ?? 0) + 1;
+  }
+
+  // Positions stay 1..n; safe inside a transaction because the unique constraint is deferred.
+  private async renumber(manager: EntityManager, collectionId: number): Promise<void> {
+    const items = await manager.find(AssetCollection, {
+      where: { collection: { id: collectionId } },
+      order: { position: 'ASC' },
+    });
+
+    for (const [index, item] of items.entries()) {
+      if (item.position !== index + 1) {
+        await manager.update(AssetCollection, item.id, { position: index + 1 });
+      }
+    }
+  }
 
   async create(
     createAssetCollectionDto: CreateAssetCollectionDto,
@@ -54,10 +77,13 @@ export class AssetCollectionService {
       );
     }
 
+    const position = await this.nextPosition(collectionId);
+
     try {
       const assetCollection =
         this.assetCollectionRepository.create({
           role,
+          position,
           collection,
           asset,
         });
@@ -84,8 +110,9 @@ export class AssetCollectionService {
     return this.assetCollectionRepository.find({
       relations: {
         collection: true,
-        asset: true,
+        asset: { dimensions: true },
       },
+      order: { collection: { id: 'ASC' }, position: 'ASC' },
     });
   }
 
@@ -95,7 +122,7 @@ export class AssetCollectionService {
         where: { id },
         relations: {
           collection: true,
-          asset: true,
+          asset: { dimensions: true },
         },
       });
 
@@ -113,7 +140,10 @@ export class AssetCollectionService {
     updateAssetCollectionDto: UpdateAssetCollectionDto,
   ): Promise<AssetCollection> {
     const assetCollection =
-      await this.assetCollectionRepository.findOneBy({ id });
+      await this.assetCollectionRepository.findOne({
+        where: { id },
+        relations: { collection: true },
+      });
 
     if (!assetCollection) {
       throw new NotFoundException(
@@ -129,8 +159,11 @@ export class AssetCollectionService {
       assetCollection.role = updateAssetCollectionDto.role;
     }
 
+    let previousCollectionId: number | null = null;
+
     if (
-      updateAssetCollectionDto.collectionId !== undefined
+      updateAssetCollectionDto.collectionId !== undefined &&
+      updateAssetCollectionDto.collectionId !== assetCollection.collection.id
     ) {
       const collection =
         await this.collectionRepository.findOneBy({
@@ -143,7 +176,9 @@ export class AssetCollectionService {
         );
       }
 
+      previousCollectionId = assetCollection.collection.id;
       assetCollection.collection = collection;
+      assetCollection.position = await this.nextPosition(collection.id);
     }
 
     if (updateAssetCollectionDto.assetId !== undefined) {
@@ -161,9 +196,15 @@ export class AssetCollectionService {
     }
 
     try {
-      return await this.assetCollectionRepository.save(
-        assetCollection,
-      );
+      return await this.assetCollectionRepository.manager.transaction(async (manager) => {
+        const saved = await manager.save(AssetCollection, assetCollection);
+
+        if (previousCollectionId !== null) {
+          await this.renumber(manager, previousCollectionId);
+        }
+
+        return saved;
+      });
     } catch (error) {
       if (
         error instanceof Error &&
@@ -179,14 +220,60 @@ export class AssetCollectionService {
     }
   }
 
-  async remove(id: number): Promise<void> {
-    const result =
-      await this.assetCollectionRepository.delete(id);
+  async reorder(
+    reorderDto: ReorderAssetCollectionsDto,
+  ): Promise<AssetCollection[]> {
+    const { collectionId, ids } = reorderDto;
 
-    if (result.affected === 0) {
+    const collection = await this.collectionRepository.findOneBy({
+      id: collectionId,
+    });
+
+    if (!collection) {
+      throw new NotFoundException(
+        `Collection with id ${collectionId} not found`,
+      );
+    }
+
+    const current = await this.assetCollectionRepository.find({
+      where: { collection: { id: collectionId } },
+    });
+    const currentIds = new Set(current.map((item) => item.id));
+
+    if (ids.length !== currentIds.size || ids.some((id) => !currentIds.has(id))) {
+      throw new BadRequestException(
+        `ids must list every asset association of Collection ${collectionId} exactly once`,
+      );
+    }
+
+    await this.assetCollectionRepository.manager.transaction(async (manager) => {
+      for (const [index, id] of ids.entries()) {
+        await manager.update(AssetCollection, id, { position: index + 1 });
+      }
+    });
+
+    return this.assetCollectionRepository.find({
+      where: { collection: { id: collectionId } },
+      relations: { collection: true, asset: { dimensions: true } },
+      order: { position: 'ASC' },
+    });
+  }
+
+  async remove(id: number): Promise<void> {
+    const assetCollection = await this.assetCollectionRepository.findOne({
+      where: { id },
+      relations: { collection: true },
+    });
+
+    if (!assetCollection) {
       throw new NotFoundException(
         `AssetCollection with id ${id} not found`,
       );
     }
+
+    await this.assetCollectionRepository.manager.transaction(async (manager) => {
+      await manager.delete(AssetCollection, id);
+      await this.renumber(manager, assetCollection.collection.id);
+    });
   }
 }

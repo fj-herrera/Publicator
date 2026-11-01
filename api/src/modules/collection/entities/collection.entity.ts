@@ -21,6 +21,12 @@ export class Collection {
         type: 'varchar',
         nullable: false,
     })
+    name: string;
+
+    @Column({
+        type: 'varchar',
+        nullable: false,
+    })
     type: string;
 
     @Column({

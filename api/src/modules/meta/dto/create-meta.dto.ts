@@ -28,5 +28,5 @@ export class CreateMetaDto {
 
   @IsOptional()
   @IsInt()
-  clientId?: number;
+  clientId?: number | null;
 }

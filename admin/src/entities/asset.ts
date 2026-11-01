@@ -23,6 +23,7 @@ export interface PublicationAssetTarget {
 
 export interface CollectionAssetTarget {
   id: number
+  name: string
   type: string
 }
 
@@ -45,6 +46,7 @@ export interface AssetCollectionRelation {
   asset: { id: number }
   collection: {
     id: number
+    name: string
     type?: string
   }
 }

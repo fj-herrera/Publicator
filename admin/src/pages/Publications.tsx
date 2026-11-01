@@ -1,33 +1,39 @@
 import { useState } from 'react'
 import { Box } from '@mui/material'
+import { useMatch, useNavigate, useParams } from 'react-router'
 import SectionTabs from '../components/navigation/SectionTabs'
 import Types from '../views/Types'
 import Tags from '../views/Tags'
 import Contexts from '../views/Contexts'
+import PublicationList from '../components/publications/PublicationList'
+import PublicationFormView from '../components/publications/PublicationFormView'
 import PushPinIcon from '@mui/icons-material/PushPin'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 import BoltIcon from '@mui/icons-material/Bolt'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 
 function Publications() {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const isCreating = useMatch('/publications/new') !== null
+  const editingId = id === undefined ? null : Number(id)
+  const isFormOpen = isCreating || editingId !== null
   const [activeTab, setActiveTab] = useState('all')
   const [visitedTabs, setVisitedTabs] = useState(() => new Set([activeTab]))
   const [isTypeFormOpen, setIsTypeFormOpen] = useState(false)
   const [isTagFormOpen, setIsTagFormOpen] = useState(false)
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
-  const tabContent: Record<string, string> = {
-    all: 'Publications',
-    types: 'Types',
-    tags: 'Tags',
-    contexts: 'Contexts',
-  }
-
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     setVisitedTabs((previousTabs) => new Set(previousTabs).add(value))
   }
 
   const handleCreate = () => {
+    if (activeTab === 'all') {
+      navigate('/publications/new')
+      return
+    }
+
     if (activeTab === 'types') {
       setIsTypeFormOpen(true)
       return
@@ -60,8 +66,22 @@ function Publications() {
           tags: 'Create Tag',
           contexts: 'Create Context',
         }}
+        createDisabled={activeTab === 'all' && isFormOpen}
         onCreate={handleCreate}
       />
+      {visitedTabs.has('all') && (
+        <Box component="section" hidden={activeTab !== 'all'}>
+          {isFormOpen ? (
+            <PublicationFormView
+              key={isCreating ? 'new' : editingId}
+              onClose={() => navigate('/publications')}
+              publicationId={isCreating ? null : editingId}
+            />
+          ) : (
+            <PublicationList />
+          )}
+        </Box>
+      )}
       {visitedTabs.has('types') && (
         <Box component="section" hidden={activeTab !== 'types'}>
           <Types
@@ -85,9 +105,6 @@ function Publications() {
             onCreateFormClose={() => setIsContextFormOpen(false)}
           />
         </Box>
-      )}
-      {activeTab !== 'types' && activeTab !== 'tags' && activeTab !== 'contexts' && (
-        <section><span>{tabContent[activeTab]}</span></section>
       )}
     </>
   )

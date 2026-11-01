@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Alert, Button, Chip, IconButton, Tooltip } from '@mui/material'
+import { Alert, Button, Chip, IconButton, TextField, Tooltip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
@@ -21,7 +21,7 @@ import { getErrorMessage } from '../../services/api-error'
 import {
   getCollectionAssets,
   saveCollectionAssetDrafts,
-  updateCollectionTypeRequest,
+  updateCollectionRequest,
 } from '../../services/collections.service'
 import {
   formatFileSize,
@@ -76,6 +76,8 @@ function CollectionEditor({
 }: CollectionEditorProps) {
   const nextKey = useRef(collection.assets.length)
   const [serverAssets, setServerAssets] = useState(collection.assets)
+  const [serverName, setServerName] = useState(collection.name)
+  const [name, setName] = useState(collection.name)
   const [serverType, setServerType] = useState(collection.type)
   const [type, setType] = useState(collection.type)
   const [drafts, setDrafts] = useState(() => toDrafts(collection.assets))
@@ -131,7 +133,13 @@ function CollectionEditor({
   }
 
   const handleSave = async () => {
+    const trimmedName = name.trim()
     const trimmedType = type.trim()
+
+    if (!trimmedName) {
+      setError('Enter a collection name.')
+      return
+    }
 
     if (!trimmedType || trimmedType.length > 50) {
       setError('Enter a collection type of 1 to 50 characters.')
@@ -147,8 +155,9 @@ function CollectionEditor({
     setError('')
 
     try {
-      if (trimmedType !== serverType) {
-        await updateCollectionTypeRequest(collection.id, trimmedType)
+      if (trimmedName !== serverName || trimmedType !== serverType) {
+        await updateCollectionRequest(collection.id, trimmedName, trimmedType)
+        setServerName(trimmedName)
         setServerType(trimmedType)
       }
 
@@ -314,10 +323,19 @@ function CollectionEditor({
 
   return (
     <section
-      aria-label={`Edit collection ${collection.position} of ${collection.publication.meta.title}`}
+      aria-label={`Edit ${collection.name}`}
       className="collection-editor"
     >
       <header className="collection-editor-header">
+        <div className="collection-editor-name">
+          <TextField
+            fullWidth
+            label="Name"
+            onChange={(event) => setName(event.target.value)}
+            required
+            value={name}
+          />
+        </div>
         <div className="collection-editor-type">
           <label htmlFor="collection-editor-type-input">Collection type</label>
           <RoleCombobox

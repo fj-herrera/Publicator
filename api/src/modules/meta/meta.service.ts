@@ -94,7 +94,21 @@ export class MetaService {
       throw new NotFoundException(`Meta with id ${id} not found`);
     }
 
-    Object.assign(meta, updateMetaDto);
+    const { clientId, ...metaChanges } = updateMetaDto;
+
+    Object.assign(meta, metaChanges);
+
+    if (clientId !== undefined) {
+      if (clientId === null) {
+        Object.assign(meta, { client: null });
+      } else {
+        const client = await this.clientRepository.findOneBy({ id: clientId });
+        if (!client) {
+          throw new NotFoundException(`Client with id ${clientId} not found`);
+        }
+        meta.client = client;
+      }
+    }
 
     try {
       return await this.metaRepository.save(meta);

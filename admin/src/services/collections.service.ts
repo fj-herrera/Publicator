@@ -23,19 +23,19 @@ export function getPublicationContexts() {
   )
 }
 
-export function createCollectionRequest(publicationId: number, type: string) {
+export function createCollectionRequest(publicationId: number, name: string, type: string) {
   return requestJson<{ id: number }>(
     '/api/collections',
     apiMessages.collections.createFailed,
-    jsonRequest('POST', { publicationId, type }),
+    jsonRequest('POST', { publicationId, name, type }),
   )
 }
 
-export function updateCollectionTypeRequest(id: number, type: string) {
+export function updateCollectionRequest(id: number, name: string, type: string) {
   return requestJson<{ id: number }>(
     `/api/collections/${id}`,
     apiMessages.collections.updateFailed,
-    jsonRequest('PATCH', { type }),
+    jsonRequest('PATCH', { name, type }),
   )
 }
 

@@ -11,22 +11,38 @@ import './collections.css'
 type CollectionFormProps = {
   publications: PublicationAssetTarget[]
   typeOptions: string[]
-  onSubmit: (publicationId: number, type: string) => Promise<void>
+  initialPublicationId?: number
+  onSubmit: (publicationId: number, name: string, type: string) => Promise<void>
   onCancel: () => void
 }
 
-function CollectionForm({ publications, typeOptions, onSubmit, onCancel }: CollectionFormProps) {
-  const [publication, setPublication] = useState<PublicationAssetTarget | null>(null)
+function CollectionForm({
+  publications,
+  typeOptions,
+  initialPublicationId,
+  onSubmit,
+  onCancel,
+}: CollectionFormProps) {
+  const [publication, setPublication] = useState<PublicationAssetTarget | null>(
+    () => publications.find((item) => item.id === initialPublicationId) ?? null,
+  )
   const [type, setType] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const trimmedName = name.trim()
     const trimmedType = type.trim()
 
     if (!publication) {
       setError('Select the publication of the collection.')
+      return
+    }
+
+    if (!trimmedName) {
+      setError('Enter a collection name.')
       return
     }
 
@@ -39,7 +55,7 @@ function CollectionForm({ publications, typeOptions, onSubmit, onCancel }: Colle
     setError('')
 
     try {
-      await onSubmit(publication.id, trimmedType)
+      await onSubmit(publication.id, trimmedName, trimmedType)
     } catch (submitError) {
       // The form keeps everything typed so the administrator can retry.
       setError(getErrorMessage(submitError, apiMessages.collections.createFailed))
@@ -60,6 +76,15 @@ function CollectionForm({ publications, typeOptions, onSubmit, onCancel }: Colle
         value={publication}
       />
       <div className="collection-create-row">
+        <div className="collection-create-name">
+          <TextField
+            fullWidth
+            label="Name"
+            onChange={(event) => setName(event.target.value)}
+            required
+            value={name}
+          />
+        </div>
         <div className="collection-create-type">
           <label htmlFor="collection-create-type-input">Collection type *</label>
           <RoleCombobox

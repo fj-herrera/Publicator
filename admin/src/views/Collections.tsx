@@ -29,6 +29,14 @@ type CollectionsProps = {
   isCreateFormOpen: boolean
   onCreateFormOpen: () => void
   onCreateFormClose: () => void
+  publicationCreationFlow?: {
+    publicationId: number
+    onReturn: (createdCollectionId?: number) => void
+  }
+  publicationEditFlow?: {
+    collectionId: number
+    onReturn: () => void
+  }
 }
 
 function uniqueOptions(options: FilterOption[]) {
@@ -36,11 +44,18 @@ function uniqueOptions(options: FilterOption[]) {
     .sort((a, b) => a.label.localeCompare(b.label))
 }
 
-function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: CollectionsProps) {
+function Collections({
+  isCreateFormOpen,
+  onCreateFormOpen,
+  onCreateFormClose,
+  publicationCreationFlow,
+  publicationEditFlow,
+}: CollectionsProps) {
   const { data, isLoading, error, reload } = useCollectionsData()
   const [filters, setFilters] = useState<CollectionFilterValues>(emptyCollectionFilters)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(publicationEditFlow?.collectionId ?? null)
+  const [flowCollectionId, setFlowCollectionId] = useState<number | null>(publicationEditFlow?.collectionId ?? null)
   const [pendingDelete, setPendingDelete] = useState<CollectionRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -121,11 +136,22 @@ function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: 
   const editingRow = rows.find((row) => row.id === editingId) ?? null
   const showEditor = editingRow !== null && !isCreateFormOpen
 
-  const handleCreate = async (publicationId: number, type: string) => {
-    await createCollectionRequest(publicationId, type)
+  const handleCreate = async (publicationId: number, name: string, type: string) => {
+    const created = await createCollectionRequest(publicationId, name, type)
     setSuccessMessage(apiMessages.catalog.created('Collection'))
     onCreateFormClose()
+    if (publicationCreationFlow?.publicationId === publicationId) {
+      setFlowCollectionId(created.id)
+      setEditingId(created.id)
+    }
     reload()
+  }
+
+  const finishPublicationCollectionFlow = (collectionId: number) => {
+    setEditingId(null)
+    setFlowCollectionId(null)
+    if (publicationCreationFlow) publicationCreationFlow.onReturn(collectionId)
+    else publicationEditFlow?.onReturn()
   }
 
   const handleMove = async (row: CollectionRow, direction: -1 | 1) => {
@@ -177,9 +203,10 @@ function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: 
 
   const handleDownload = () => {
     downloadCsv('publicator-collections.csv', [
-      ['id', 'position', 'publication', 'slug', 'client', 'type', 'contexts', 'assets'],
+      ['id', 'name', 'position', 'publication', 'slug', 'client', 'type', 'contexts', 'assets'],
       ...visibleRows.map((row) => [
         String(row.id),
+        row.name,
         String(row.position),
         row.publication.meta.title,
         row.publication.meta.slug,
@@ -201,9 +228,15 @@ function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: 
 
       {isCreateFormOpen && data && (
         <CollectionForm
-          onCancel={onCreateFormClose}
+          initialPublicationId={publicationCreationFlow?.publicationId}
+          onCancel={() => {
+            onCreateFormClose()
+            publicationCreationFlow?.onReturn()
+          }}
           onSubmit={handleCreate}
-          publications={data.publications}
+          publications={publicationCreationFlow
+            ? data.publications.filter((item) => item.id === publicationCreationFlow.publicationId)
+            : data.publications}
           typeOptions={typeOptions}
         />
       )}
@@ -214,11 +247,21 @@ function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: 
           inventory={data.assets}
           key={editingRow.id}
           onChanged={reload}
-          onClose={() => setEditingId(null)}
+          onClose={() => {
+            if (flowCollectionId === editingRow.id) {
+              finishPublicationCollectionFlow(editingRow.id)
+            } else {
+              setEditingId(null)
+            }
+          }}
           onSaved={() => {
-            setEditingId(null)
-            setSuccessMessage('Collection updated successfully.')
-            reload()
+            if (flowCollectionId === editingRow.id) {
+              finishPublicationCollectionFlow(editingRow.id)
+            } else {
+              setEditingId(null)
+              setSuccessMessage('Collection updated successfully.')
+              reload()
+            }
           }}
           roles={roles}
           typeOptions={typeOptions}
@@ -300,6 +343,7 @@ function Collections({ isCreateFormOpen, onCreateFormOpen, onCreateFormClose }: 
       <CollectionDeleteDialog
         error={deleteError}
         isDeleting={isDeleting}
+        collectionName={pendingDelete?.name ?? ''}
         onClose={() => setPendingDelete(null)}
         onConfirm={() => void handleConfirmDelete()}
         open={pendingDelete !== null}

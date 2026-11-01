@@ -59,6 +59,16 @@
     box-shadow: 0 4px 12px rgb(0 0 0 / 16%);
 }
 
+.asset-role-popper {
+    z-index: 1500;
+    width: min(220px, calc(100vw - 32px));
+}
+
+.asset-role-popper .asset-role-options {
+    position: static;
+    width: 100%;
+}
+
 .asset-role-options button {
     min-height: 36px;
     padding: 7px 10px;

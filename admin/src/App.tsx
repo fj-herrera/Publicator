@@ -36,6 +36,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/publications" replace />} />
               <Route path="/publications" element={<Publications />} />
+              <Route path="/publications/new" element={<Publications />} />
+              <Route path="/publications/:id/edit" element={<Publications />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/clients" element={<Clients />} />
               <Route path="/skills" element={<Skills />} />

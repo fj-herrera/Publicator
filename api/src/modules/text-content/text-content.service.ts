@@ -8,8 +8,12 @@ import { Repository } from 'typeorm';
 import { TextContent } from './entities/text-content.entity.js';
 import { CreateTextContentDto } from './dto/create-text-content.dto.js';
 import { UpdateTextContentDto } from './dto/update-text-content.dto.js';
+import { CreatePublicationTextDto } from './dto/create-publication-text.dto.js';
+import { UpdatePublicationTextDto } from './dto/update-publication-text.dto.js';
 import { Content } from '../../modules/content/entities/content.entity.js';
 import { Text } from '../../modules/text/entities/text.entity.js';
+import { Publication } from '../../modules/publication/entities/publication.entity.js';
+import { AssetText } from '../../modules/asset-text/entities/asset-text.entity.js';
 
 @Injectable()
 export class TextContentService {
@@ -66,10 +70,82 @@ export class TextContentService {
     return await this.textContentRepository.save(textContent);
   }
 
+  async createForPublication(input: CreatePublicationTextDto): Promise<TextContent> {
+    return this.textContentRepository.manager.transaction(async (manager) => {
+      const publication = await manager.findOne(Publication, {
+        where: { id: input.publicationId },
+      });
+      if (!publication) {
+        throw new NotFoundException(`Publication with id ${input.publicationId} not found`);
+      }
+
+      let content = await manager.findOne(Content, {
+        where: { publication: { id: publication.id } },
+        order: { id: 'ASC' },
+      });
+      if (!content) {
+        content = await manager.save(Content, manager.create(Content, { publication }));
+      }
+
+      const text = await manager.save(
+        Text,
+        manager.create(Text, { text: input.text, format: input.format }),
+      );
+      const association = await manager.save(
+        TextContent,
+        manager.create(TextContent, { content, text, type: input.type }),
+      );
+
+      association.content = content;
+      association.text = text;
+      return association;
+    });
+  }
+
+  async updateForPublication(
+    id: number,
+    input: UpdatePublicationTextDto,
+  ): Promise<TextContent> {
+    return this.textContentRepository.manager.transaction(async (manager) => {
+      const association = await manager.findOne(TextContent, {
+        where: { id },
+        relations: { content: { publication: true }, text: true },
+      });
+      if (!association) {
+        throw new NotFoundException(`TextContent with id ${id} not found`);
+      }
+
+      const currentText = association.text;
+      const [publicationUsages, assetUsages] = currentText
+        ? await Promise.all([
+          manager.count(TextContent, { where: { text: { id: currentText.id } } }),
+          manager.count(AssetText, { where: { text: { id: currentText.id } } }),
+        ])
+        : [0, 0];
+      const sharedTextCount = publicationUsages + assetUsages;
+      let text: Text;
+
+      if (currentText && sharedTextCount <= 1) {
+        currentText.text = input.text;
+        currentText.format = input.format;
+        text = await manager.save(Text, currentText);
+      } else {
+        text = await manager.save(
+          Text,
+          manager.create(Text, { text: input.text, format: input.format }),
+        );
+      }
+
+      association.text = text;
+      association.type = input.type;
+      return manager.save(TextContent, association);
+    });
+  }
+
   async findAll(): Promise<TextContent[]> {
     return this.textContentRepository.find({
       relations: {
-        content: true,
+        content: { publication: true },
         text: true,
       },
     });

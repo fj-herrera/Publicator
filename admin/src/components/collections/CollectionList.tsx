@@ -28,7 +28,7 @@ function getThumbnailUrls(row: CollectionRow) {
 }
 
 function CollectionList({ rows, onEdit, onDelete, onMove }: CollectionListProps) {
-  const label = (row: CollectionRow) => `${row.type} ${row.position} of ${row.publication.meta.title}`
+  const label = (row: CollectionRow) => `${row.name} ${row.position} of ${row.publication.meta.title}`
 
   const columns: DataGridColumn<CollectionRow>[] = [
     {
@@ -45,6 +45,7 @@ function CollectionList({ rows, onEdit, onDelete, onMove }: CollectionListProps)
             <span className="collection-position" title="Position in the publication">
               {row.position}
             </span>
+            <strong className="collection-name">{row.name}</strong>
             {row.contexts.length > 0 && (
               <span className="collection-context">
                 {row.contexts.map((context) => context.name).join(', ')}

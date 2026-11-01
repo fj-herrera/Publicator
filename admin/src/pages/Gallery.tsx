@@ -11,6 +11,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import SectionTabs from '../components/navigation/SectionTabs'
+import { useLocation, useNavigate } from 'react-router'
 import AssetTextsEditor from '../components/assets/AssetTextsEditor'
 import AssetUploadForm from '../components/assets/AssetUploadForm'
 import {
@@ -70,8 +71,8 @@ function getRelationLabel(relation: PublicationAssetRelation | AssetCollectionRe
       : `Publication #${relation.publication.id}`
   }
 
-  return relation.collection.type
-    ? `${relation.collection.type} (#${relation.collection.id})`
+  return relation.collection.name
+    ? `${relation.collection.name} (${relation.collection.type ?? 'Collection'}, #${relation.collection.id})`
     : `Collection #${relation.collection.id}`
 }
 
@@ -90,6 +91,14 @@ function toTextDraft(assetText: AssetText, key: number): AssetTextDraft {
 }
 
 function Gallery() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const routeState = location.state as {
+    publicationCollectionFlow?: { publicationId: number; returnPath: string }
+    publicationCollectionEditFlow?: { collectionId: number; returnPath: string }
+  } | null
+  const publicationCollectionFlow = routeState?.publicationCollectionFlow
+  const publicationCollectionEditFlow = routeState?.publicationCollectionEditFlow
   const [activeGalleryTab, setActiveGalleryTab] = useState('collections')
   const [assets, setAssets] = useState<Asset[]>([])
   const [publications, setPublications] = useState<PublicationAssetTarget[]>([])
@@ -109,7 +118,9 @@ function Gallery() {
   const [assetEditError, setAssetEditError] = useState('')
   const [actionAsset, setActionAsset] = useState<Asset | null>(null)
   const [isCreateAssetOpen, setIsCreateAssetOpen] = useState(false)
-  const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(false)
+  const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(
+    Boolean(publicationCollectionFlow),
+  )
   const [failedPreviews, setFailedPreviews] = useState<Set<number>>(() => new Set())
   const [retryCount, setRetryCount] = useState(0)
   const nextPublicationRelationKey = useRef(0)
@@ -537,6 +548,23 @@ function Gallery() {
           isCreateFormOpen={isCreateCollectionOpen}
           onCreateFormClose={() => setIsCreateCollectionOpen(false)}
           onCreateFormOpen={() => setIsCreateCollectionOpen(true)}
+          publicationCreationFlow={publicationCollectionFlow ? {
+            publicationId: publicationCollectionFlow.publicationId,
+            onReturn: (createdCollectionId) => navigate(publicationCollectionFlow.returnPath, {
+              replace: true,
+              state: {
+                publicationCollectionReturn: true,
+                createdCollectionId,
+              },
+            }),
+          } : undefined}
+          publicationEditFlow={publicationCollectionEditFlow ? {
+            collectionId: publicationCollectionEditFlow.collectionId,
+            onReturn: () => navigate(publicationCollectionEditFlow.returnPath, {
+              replace: true,
+              state: { publicationCollectionReturn: true },
+            }),
+          } : undefined}
         />
       )}
 

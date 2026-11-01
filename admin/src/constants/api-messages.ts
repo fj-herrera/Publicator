@@ -59,8 +59,8 @@ export const apiMessages = {
     deleteFailed: 'Unable to delete collection.',
     reorderFailed: 'Unable to change the order.',
     assetFailed: 'Unable to update the collection assets.',
-    deleteConfirmation: (position: number, publication: string) => (
-      `Are you sure you want to delete collection ${position} of "${publication}"? Its assets will stay in the gallery.`
+    deleteConfirmation: (name: string, position: number, publication: string) => (
+      `Are you sure you want to delete "${name}" (${position} of "${publication}")? Its assets will stay in the gallery.`
     ),
   },
   catalog: {

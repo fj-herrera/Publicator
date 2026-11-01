@@ -229,7 +229,7 @@ function AssetUploadForm({
                   ))
                   : collections.map((collection) => (
                     <option key={collection.id} value={collection.id}>
-                      {collection.type} (#{collection.id})
+                      {collection.name} ({collection.type}, #{collection.id})
                     </option>
                   ))}
               </select>

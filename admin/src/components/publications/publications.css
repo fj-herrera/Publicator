@@ -1,0 +1,355 @@
+.publication-list-view {
+    min-width: 0;
+    color: #24292d;
+    background: #fff;
+    text-align: left;
+}
+
+.publication-list-message {
+    margin: 12px 16px;
+}
+
+.publication-list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 14px 16px 10px;
+}
+
+.publication-search {
+    width: min(100%, 320px);
+}
+
+.publication-column-picker {
+    width: min(100%, 240px);
+}
+
+.publication-list-filters {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 4px 16px 16px;
+}
+
+.publication-filter {
+    min-width: 0;
+}
+
+.publication-list-filters .MuiAutocomplete-tag,
+.publication-column-picker .MuiAutocomplete-tag {
+    max-width: 100px;
+}
+
+.publication-table-wrap {
+    width: 100%;
+    border-top: 1px solid #d5d9dc;
+    background: #fff;
+}
+
+.publication-table-container {
+    width: 100%;
+}
+
+.publication-table {
+    width: 100%;
+    min-width: 1040px;
+    table-layout: fixed;
+}
+
+.publication-table .MuiTableCell-root {
+    padding: 8px 10px;
+    border-right: 1px solid #e1e5e6;
+    border-bottom: 1px solid #d5d9dc;
+    color: #24292d;
+    vertical-align: middle;
+}
+
+.publication-table .MuiTableBody-root .MuiTableRow-root {
+    height: 146px;
+}
+
+.publication-table .MuiTableCell-head {
+    height: 38px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    border-right-color: #b6e4cc;
+    background: #c9f7df;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.publication-image-column {
+    width: 144px;
+}
+
+.publication-info-column {
+    width: auto;
+}
+
+.publication-tags-column,
+.publication-skills-column {
+    width: 170px;
+}
+
+.publication-assets-column {
+    width: 140px;
+}
+
+.publication-actions-column {
+    width: 96px;
+}
+
+.publication-thumbnail,
+.publication-thumbnail-placeholder {
+    display: block;
+    width: 124px;
+    height: 124px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: #e6e8e9;
+    object-fit: cover;
+}
+
+.publication-main-info {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 16px;
+    line-height: 1.25;
+}
+
+.publication-meta-line {
+    display: flex;
+    min-width: 0;
+    height: 22px;
+    align-items: center;
+    gap: 7px;
+    color: #586168;
+    font-size: 11px;
+}
+
+.publication-meta-separator {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 14px;
+    background: #d5d9dc;
+}
+
+.publication-id {
+    flex: 0 0 auto;
+    color: #454d52;
+    font-variant-numeric: tabular-nums;
+}
+
+.publication-visibility {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 3px;
+    text-transform: capitalize;
+}
+
+.publication-visibility svg,
+.publication-meta-line .publication-featured {
+    width: 20px;
+    height: 20px;
+}
+
+.publication-visibility-visible {
+    color: #197548;
+}
+
+.publication-visibility-hidden {
+    color: #737b80;
+}
+
+.publication-featured {
+    color: #c68a00;
+}
+
+.publication-featured-off {
+    color: #a5acb0;
+}
+
+.publication-context-names {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.publication-title {
+    max-width: 100%;
+    overflow: hidden;
+    color: #202629;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.publication-client,
+.publication-type,
+.publication-date {
+    max-width: 100%;
+    overflow: hidden;
+    color: #687077;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.publication-type {
+    color: #343c41;
+    font-weight: 600;
+}
+
+.publication-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+}
+
+.publication-tag-chip,
+.publication-skill-chip,
+.publication-more-chip {
+    display: inline-flex;
+    max-width: 100%;
+    min-height: 24px;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    overflow: hidden;
+    border: 1px solid #d4d8da;
+    border-radius: 14px;
+    color: #343b40;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.publication-tag-chip {
+    background: #fff;
+}
+
+.publication-skill-chip {
+    border-color: #b9a2d0;
+    background: #f5effa;
+}
+
+.publication-skill-chip img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
+.publication-more-chip {
+    min-width: 24px;
+    justify-content: center;
+    padding: 2px 6px;
+    background: #f1f3f4;
+}
+
+.publication-muted {
+    color: #858d91;
+    font-size: 13px;
+}
+
+.publication-asset-counts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    color: #60696e;
+    font-size: 11px;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.publication-asset-counts span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.publication-asset-counts .publication-asset-counts-nested {
+    padding-left: 19px;
+}
+
+.publication-asset-counts svg {
+    width: 15px;
+    height: 15px;
+}
+
+.publication-list-view .MuiTablePagination-root {
+    min-height: 52px;
+    border-top: 1px solid #e1e5e6;
+    color: #596267;
+}
+
+.publication-list-loading,
+.publication-list-empty {
+    display: flex;
+    min-height: 220px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    color: #626c71;
+    text-align: center;
+}
+
+.publication-list-empty h2 {
+    margin: 0;
+    color: #30383c;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.publication-list-empty p {
+    font-size: 13px;
+}
+
+.publication-list-no-results {
+    min-height: 160px;
+}
+
+@media (max-width: 1000px) {
+    .publication-list-filters {
+        grid-template-columns: repeat(3, minmax(140px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .publication-list-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .publication-search,
+    .publication-column-picker {
+        width: 100%;
+    }
+
+    .publication-list-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .publication-filter {
+        width: 100%;
+    }
+
+    .publication-table {
+        min-width: 930px;
+    }
+}

@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: publicator_pre
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "${PRE_DB_PASSWORD:?PRE_DB_PASSWORD must be set}"
+    volumes:
+      - postgres_pre_data:/var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d publicator_pre" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - pre_network
+
+  api:
+    build:
+      context: ./api
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MEDIA_DIR: /app/media
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: admin
+      DB_PASSWORD: "${PRE_DB_PASSWORD:?PRE_DB_PASSWORD must be set}"
+      DB_NAME: publicator_pre
+    expose:
+      - "3000"
+    volumes:
+      - ./media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pre_network
+
+  nginx:
+    build:
+      context: ./admin
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    networks:
+      - pre_network
+
+networks:
+  pre_network:
+
+volumes:
+  postgres_pre_data:

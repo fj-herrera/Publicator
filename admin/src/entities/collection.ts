@@ -7,6 +7,7 @@ export interface CollectionClient {
 
 export interface Collection {
   id: number
+  name: string
   type: string
   position: number
   publication: {

@@ -61,7 +61,7 @@ describe('CollectionService', () => {
     publicationRepository.findOneBy.mockResolvedValue({ id: 4 });
     collectionRepository.maximum.mockResolvedValue(2);
 
-    const created = await service.create({ type: 'Gallery', publicationId: 4 });
+    const created = await service.create({ name: 'Portfolio', type: 'Gallery', publicationId: 4 });
 
     expect(created.position).toBe(3);
   });
@@ -70,7 +70,7 @@ describe('CollectionService', () => {
     publicationRepository.findOneBy.mockResolvedValue({ id: 4 });
     collectionRepository.maximum.mockResolvedValue(null);
 
-    const created = await service.create({ type: 'Gallery', publicationId: 4 });
+    const created = await service.create({ name: 'Portfolio', type: 'Gallery', publicationId: 4 });
 
     expect(created.position).toBe(1);
   });
@@ -79,7 +79,7 @@ describe('CollectionService', () => {
     publicationRepository.findOneBy.mockResolvedValue(null);
 
     await expect(
-      service.create({ type: 'Gallery', publicationId: 9 }),
+      service.create({ name: 'Portfolio', type: 'Gallery', publicationId: 9 }),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -157,6 +157,24 @@ describe('CollectionService', () => {
       expect.objectContaining({ type: 'Slider', position: 2 }),
     );
     expect(collectionRepository.maximum).not.toHaveBeenCalled();
+  });
+
+  it('updates the collection name without changing its other fields', async () => {
+    const collection = {
+      id: 1,
+      name: 'Old name',
+      type: 'Gallery',
+      position: 2,
+      publication: { id: 4 },
+    };
+    collectionRepository.findOne.mockResolvedValue(collection);
+
+    await service.update(1, { name: 'New name' });
+
+    expect(manager.save).toHaveBeenCalledWith(
+      Collection,
+      expect.objectContaining({ name: 'New name', type: 'Gallery', position: 2 }),
+    );
   });
 
   it('rejects an empty update', async () => {

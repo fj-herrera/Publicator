@@ -56,7 +56,7 @@ export class CollectionService {
   async create(
     createCollectionDto: CreateCollectionDto,
   ): Promise<Collection> {
-    const { publicationId, type } = createCollectionDto;
+    const { publicationId, name, type } = createCollectionDto;
 
     const publication = await this.publicationRepository.findOneBy({
       id: publicationId,
@@ -69,6 +69,7 @@ export class CollectionService {
     }
 
     const collection = this.collectionRepository.create({
+      name,
       type,
       publication,
       position: await this.nextPosition(publicationId),
@@ -126,6 +127,10 @@ export class CollectionService {
 
     if (updateCollectionDto.type !== undefined) {
       collection.type = updateCollectionDto.type;
+    }
+
+    if (updateCollectionDto.name !== undefined) {
+      collection.name = updateCollectionDto.name;
     }
 
     let previousPublicationId: number | null = null;

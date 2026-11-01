@@ -12,6 +12,7 @@ import { apiMessages } from '../../constants/api-messages'
 
 type CollectionDeleteDialogProps = {
   open: boolean
+  collectionName: string
   position: number
   publicationTitle: string
   error: string
@@ -22,6 +23,7 @@ type CollectionDeleteDialogProps = {
 
 function CollectionDeleteDialog({
   open,
+  collectionName,
   position,
   publicationTitle,
   error,
@@ -39,7 +41,7 @@ function CollectionDeleteDialog({
       <DialogContent>
         {error && <Alert severity="error">{error}</Alert>}
         <DialogContentText>
-          {apiMessages.collections.deleteConfirmation(position, publicationTitle)}
+          {apiMessages.collections.deleteConfirmation(collectionName, position, publicationTitle)}
         </DialogContentText>
       </DialogContent>
       <DialogActions>

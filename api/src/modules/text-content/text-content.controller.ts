@@ -11,12 +11,19 @@ import {
 import { TextContentService } from './text-content.service.js';
 import { CreateTextContentDto } from './dto/create-text-content.dto.js';
 import { UpdateTextContentDto } from './dto/update-text-content.dto.js';
+import { CreatePublicationTextDto } from './dto/create-publication-text.dto.js';
+import { UpdatePublicationTextDto } from './dto/update-publication-text.dto.js';
 
 @Controller('text-contents')
 export class TextContentController {
   constructor(
     private readonly textContentService: TextContentService,
   ) {}
+
+  @Post('publication')
+  createForPublication(@Body() input: CreatePublicationTextDto) {
+    return this.textContentService.createForPublication(input);
+  }
 
   @Post()
   create(@Body() createTextContentDto: CreateTextContentDto) {
@@ -44,6 +51,14 @@ export class TextContentController {
       id,
       updateTextContentDto,
     );
+  }
+
+  @Patch(':id/publication')
+  updateForPublication(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() input: UpdatePublicationTextDto,
+  ) {
+    return this.textContentService.updateForPublication(id, input);
   }
 
   @Delete(':id')

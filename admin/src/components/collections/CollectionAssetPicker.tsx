@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Checkbox } from '@mui/material'
+import { Button } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import SearchIcon from '@mui/icons-material/Search'
@@ -92,12 +92,12 @@ function CollectionAssetPicker({ assets, roles, onAdd, onClose }: CollectionAsse
         <ul className="collection-picker-list">
           {visibleAssets.map((asset) => (
             <li key={asset.id}>
-              <label className="collection-picker-item">
-                <Checkbox
-                  checked={selectedIds.has(asset.id)}
-                  onChange={() => toggleAsset(asset.id)}
-                  size="small"
-                />
+              <button
+                aria-pressed={selectedIds.has(asset.id)}
+                className={`collection-picker-item${selectedIds.has(asset.id) ? ' collection-picker-item-selected' : ''}`}
+                onClick={() => toggleAsset(asset.id)}
+                type="button"
+              >
                 <span className="collection-picker-preview">
                   {asset.type === 'Image' && isPreviewableImage(asset.url)
                     ? <img alt="" loading="lazy" src={getPreviewUrl(asset.url)} />
@@ -107,7 +107,7 @@ function CollectionAssetPicker({ assets, roles, onAdd, onClose }: CollectionAsse
                   {getAssetName(asset)}
                 </span>
                 <span className="collection-picker-type">{asset.type}</span>
-              </label>
+              </button>
             </li>
           ))}
         </ul>

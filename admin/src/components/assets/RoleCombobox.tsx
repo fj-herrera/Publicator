@@ -1,3 +1,4 @@
+import { Popper } from '@mui/material'
 import { useState } from 'react'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import './role-combobox.css'
@@ -9,6 +10,7 @@ interface RoleComboboxProps {
   options: string[]
   disabled?: boolean
   createLabel?: string
+  portalOptions?: boolean
   onChange: (value: string) => void
 }
 
@@ -19,8 +21,10 @@ function RoleCombobox({
   options,
   disabled = false,
   createLabel = 'Create new role',
+  portalOptions = false,
   onChange,
 }: RoleComboboxProps) {
+  const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const [isFiltering, setIsFiltering] = useState(false)
@@ -76,6 +80,7 @@ function RoleCombobox({
   return (
     <div
       className="asset-role-combobox"
+      ref={setAnchorEl}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setIsOpen(false)
@@ -122,7 +127,32 @@ function RoleCombobox({
         <ArrowDropDownIcon aria-hidden="true" />
       </button>
       {isOpen && !disabled && visibleOptions.length > 0 && (
-        <div className="asset-role-options" id={listId} role="listbox">
+        portalOptions ? (
+          <Popper
+            anchorEl={anchorEl}
+            className="asset-role-popper"
+            open
+            placement="bottom-start"
+          >
+            <div className="asset-role-options" id={listId} role="listbox">
+              {visibleOptions.map((option, index) => (
+                <button
+                  aria-selected={activeIndex === index}
+                  className={activeIndex === index ? 'asset-role-option-active' : ''}
+                  id={`${listId}-${index}`}
+                  key={`${option.value}-${index}`}
+                  onClick={() => selectOption(option)}
+                  onMouseDown={(event) => event.preventDefault()}
+                  role="option"
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </Popper>
+        ) : (
+          <div className="asset-role-options" id={listId} role="listbox">
           {visibleOptions.map((option, index) => (
             <button
               aria-selected={activeIndex === index}
@@ -137,7 +167,8 @@ function RoleCombobox({
               {option.label}
             </button>
           ))}
-        </div>
+          </div>
+        )
       )}
     </div>
   )

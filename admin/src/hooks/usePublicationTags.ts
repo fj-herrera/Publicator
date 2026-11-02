@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   createPublicationTag,
   deletePublicationTag,
@@ -7,93 +7,65 @@ import {
 } from '../services/publication-tags.service'
 import { getErrorMessage } from '../services/api-error'
 import { apiMessages } from '../constants/api-messages'
+import { invalidate } from '../state/resource-invalidation'
 import type { Tag } from '../entities/tag'
+import useResource from './useResource'
 
 function usePublicationTags() {
-  const [tags, setTags] = useState<Tag[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let isCurrent = true
-
-    const loadTags = async () => {
-      try {
-        const loadedTags = await getPublicationTags()
-        if (isCurrent) {
-          setTags(loadedTags)
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.tags.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadTags()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const { data, isLoading, error: loadError } = useResource<Tag[]>(
+    'tags',
+    getPublicationTags,
+    apiMessages.tags.loadFailed,
+  )
+  const [actionError, setActionError] = useState('')
 
   const createTag = async (name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const createdTag = await createPublicationTag(name)
-      setTags((currentTags) => [
-        ...currentTags,
-        { ...createdTag, inPublications: 0 },
-      ])
+      await createPublicationTag(name)
+      invalidate('tags')
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, apiMessages.tags.createFailed))
+      setActionError(getErrorMessage(createError, apiMessages.tags.createFailed))
       return false
     }
   }
 
   const updateTag = async (id: number, name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const updatedTag = await updatePublicationTag(id, name)
-      setTags((currentTags) => currentTags.map((tag) => (
-        tag.id === id ? { ...tag, ...updatedTag } : tag
-      )))
+      await updatePublicationTag(id, name)
+      invalidate('tags')
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, apiMessages.tags.updateFailed))
+      setActionError(getErrorMessage(updateError, apiMessages.tags.updateFailed))
       return false
     }
   }
 
   const deleteTag = async (id: number): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
       await deletePublicationTag(id)
-      setTags((currentTags) => currentTags.filter((tag) => tag.id !== id))
+      invalidate('tags')
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, apiMessages.tags.deleteFailed))
+      setActionError(getErrorMessage(deleteError, apiMessages.tags.deleteFailed))
       return false
     }
   }
 
   return {
-    tags,
+    tags: data ?? [],
     isLoading,
-    error,
+    error: actionError || loadError,
     createTag,
     updateTag,
     deleteTag,
-    clearError: () => setError(''),
+    clearError: () => setActionError(''),
   }
 }
 

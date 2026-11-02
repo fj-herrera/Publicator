@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
 import CollectionsIcon from '@mui/icons-material/Collections'
@@ -10,6 +10,8 @@ import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutl
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import AssetDeleteDialog from '../components/assets/AssetDeleteDialog'
+import EmptyState from '../components/data-display/EmptyState'
 import SectionTabs from '../components/navigation/SectionTabs'
 import { useLocation, useNavigate } from 'react-router'
 import AssetTextsEditor from '../components/assets/AssetTextsEditor'
@@ -27,28 +29,21 @@ import RoleCombobox from '../components/assets/RoleCombobox'
 import type {
   Asset,
   AssetCollectionRelation,
-  PublicationAssetTarget,
   PublicationAssetRelation,
 } from '../entities/asset'
 import type { PublicationRelationDraft } from '../components/assets/PublicationRelationDrafts'
 import type { AssetText, AssetTextDraft } from '../entities/asset-text'
-import { getAssetTexts, saveAssetTextDrafts } from '../services/asset-texts.service'
+import { saveAssetTextDrafts } from '../services/asset-texts.service'
 import {
   createPublicationAsset,
-  getAssetCollections,
-  getAssets,
-  getPublications,
-  getPublicationAssets,
+  deleteAsset as deleteAssetRequest,
   updateAssetName,
   updatePublicationAssetRole,
 } from '../services/assets.service'
 import { getErrorMessage } from '../services/api-error'
+import { invalidate, type ResourceName } from '../state/resource-invalidation'
+import useGalleryData from '../hooks/useGalleryData'
 import './gallery.css'
-
-type AssetRelations = {
-  publications: PublicationAssetRelation[]
-  collections: AssetCollectionRelation[]
-}
 
 function formatUploadDate(value?: string | null) {
   if (!value) {
@@ -100,94 +95,81 @@ function Gallery() {
   const publicationCollectionFlow = routeState?.publicationCollectionFlow
   const publicationCollectionEditFlow = routeState?.publicationCollectionEditFlow
   const [activeGalleryTab, setActiveGalleryTab] = useState('collections')
-  const [assets, setAssets] = useState<Asset[]>([])
-  const [publications, setPublications] = useState<PublicationAssetTarget[]>([])
-  const [relations, setRelations] = useState<Record<number, AssetRelations>>({})
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const {
+    assets,
+    publications,
+    relations,
+    assetTexts,
+    isLoading,
+    isRefreshing,
+    error,
+    retry,
+  } = useGalleryData()
   const [query, setQuery] = useState('')
   const [selectedType, setSelectedType] = useState('all')
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [selectedAssetSnapshot, setSelectedAsset] = useState<Asset | null>(null)
+  // The open asset follows the shared data, so edits made elsewhere show up.
+  const selectedAsset = useMemo(
+    () => (selectedAssetSnapshot
+      ? assets.find((asset) => asset.id === selectedAssetSnapshot.id) ?? null
+      : null),
+    [assets, selectedAssetSnapshot],
+  )
   const [isEditingAsset, setIsEditingAsset] = useState(false)
   const [editedAssetName, setEditedAssetName] = useState('')
   const [editedPublicationRoles, setEditedPublicationRoles] = useState<Record<number, string>>({})
   const [newPublicationRelations, setNewPublicationRelations] = useState<PublicationRelationDraft[]>([])
-  const [assetTexts, setAssetTexts] = useState<Record<number, AssetText[]>>({})
   const [assetTextDrafts, setAssetTextDrafts] = useState<AssetTextDraft[]>([])
   const [isSavingAsset, setIsSavingAsset] = useState(false)
   const [assetEditError, setAssetEditError] = useState('')
+  const [pendingDeleteAssets, setPendingDeleteAssets] = useState<Asset[]>([])
+  const [isDeletingAsset, setIsDeletingAsset] = useState(false)
+  const [deleteAssetError, setDeleteAssetError] = useState('')
+  const [isSelectingAssets, setIsSelectingAssets] = useState(false)
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<number>>(() => new Set())
   const [actionAsset, setActionAsset] = useState<Asset | null>(null)
   const [isCreateAssetOpen, setIsCreateAssetOpen] = useState(false)
   const [isCreateCollectionOpen, setIsCreateCollectionOpen] = useState(
     Boolean(publicationCollectionFlow),
   )
   const [failedPreviews, setFailedPreviews] = useState<Set<number>>(() => new Set())
-  const [retryCount, setRetryCount] = useState(0)
+  // Set after a partial text save until the reloaded texts can rebuild the drafts.
+  const [textReconcile, setTextReconcile] = useState<{
+    assetId: number
+    drafts: AssetTextDraft[]
+    failures: Map<number, string>
+  } | null>(null)
   const nextPublicationRelationKey = useRef(0)
   const nextAssetTextKey = useRef(0)
 
-  const groupAssetTexts = (items: AssetText[]) => {
-    const grouped: Record<number, AssetText[]> = {}
-    items.forEach((item) => {
-      grouped[item.asset.id] = [...(grouped[item.asset.id] ?? []), item]
-    })
-    return grouped
-  }
-
   useEffect(() => {
-    let isCurrent = true
+    if (!textReconcile || isRefreshing) return
 
-    const loadAssets = async () => {
-      setIsLoading(true)
-      setError('')
+    const { assetId, drafts, failures } = textReconcile
+    const failedDrafts = drafts
+      .filter((draft) => failures.has(draft.key))
+      .map((draft) => ({ ...draft, error: failures.get(draft.key) }))
+    const failedIds = new Set(failedDrafts.map((draft) => draft.id))
+    // One-shot reconciliation once the reloaded texts are available.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTextReconcile(null)
 
-      try {
-        const [
-          loadedAssets,
-          publicationRelations,
-          collectionRelations,
-          loadedPublications,
-          loadedAssetTexts,
-        ] = await Promise.all([
-          getAssets(),
-          getPublicationAssets(),
-          getAssetCollections(),
-          getPublications(),
-          getAssetTexts(),
-        ])
-        const nextRelations: Record<number, AssetRelations> = {}
-
-        loadedAssets.forEach((asset) => {
-          nextRelations[asset.id] = {
-            publications: publicationRelations.filter((relation) => relation.asset.id === asset.id),
-            collections: collectionRelations.filter((relation) => relation.asset.id === asset.id),
-          }
-        })
-
-        if (isCurrent) {
-          setAssets(loadedAssets)
-          setPublications(loadedPublications)
-          setAssetTexts(groupAssetTexts(loadedAssetTexts))
-          setRelations(nextRelations)
-          setFailedPreviews(new Set())
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, 'Could not load assets.'))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
+    if (error) {
+      // Without the saved state another save could duplicate texts.
+      setAssetTextDrafts((current) => current.map((draft) => (
+        failures.has(draft.key) ? { ...draft, error: failures.get(draft.key) } : draft
+      )))
+      setAssetEditError('Texts were saved, but the list could not be refreshed. Retry loading the gallery before editing them again.')
+      return
     }
 
-    void loadAssets()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [retryCount])
+    setAssetTextDrafts([
+      ...(assetTexts[assetId] ?? [])
+        .filter((item) => !failedIds.has(item.id))
+        .map((item) => toTextDraft(item, nextAssetTextKey.current++)),
+      ...failedDrafts,
+    ])
+  }, [assetTexts, error, isRefreshing, textReconcile])
 
   const assetTypes = Array.from(new Set(assets.map((asset) => asset.type))).sort()
   const publicationRoles = Array.from(new Set(
@@ -216,6 +198,20 @@ function Gallery() {
 
     return matchesQuery && (selectedType === 'all' || asset.type === selectedType)
   })
+  const getAssetAssociationCount = (asset: Asset) => {
+    const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
+    return assetRelations.publications.length
+      + assetRelations.collections.length
+      + (assetTexts[asset.id]?.length ?? 0)
+  }
+  const deletableVisibleAssets = visibleAssets.filter(
+    (asset) => getAssetAssociationCount(asset) === 0,
+  )
+  const selectedDeletableAssets = assets.filter(
+    (asset) => selectedAssetIds.has(asset.id) && getAssetAssociationCount(asset) === 0,
+  )
+  const allVisibleDeletableAssetsSelected = deletableVisibleAssets.length > 0
+    && deletableVisibleAssets.every((asset) => selectedAssetIds.has(asset.id))
 
   const openAssetDetails = (asset: Asset, editMode = false) => {
     setSelectedAsset(asset)
@@ -338,105 +334,57 @@ function Gallery() {
           relation.role.trim(),
         )
       )))
-      const assetWithDetails = { ...selectedAsset, ...updatedAsset }
       const savedRoles: Record<number, string> = {}
       changedRoles.forEach((relation, index) => {
         if (roleResults[index].status === 'fulfilled') {
           savedRoles[relation.id] = trimmedRoles[relation.id]
         }
       })
-      const savedRelations: PublicationAssetRelation[] = []
       const failedDraftKeys = new Set<number>()
       relationResults.forEach((result, index) => {
         if (result.status === 'rejected') {
           failedDraftKeys.add(newPublicationRelations[index].key)
-          return
-        }
-
-        const createdRelation = result.value as PublicationAssetRelation
-        const publication = publications.find(
-          (item) => item.id === Number(newPublicationRelations[index].publicationId),
-        )
-        if (publication) {
-          savedRelations.push({
-            ...createdRelation,
-            publication: { ...createdRelation.publication, ...publication },
-          })
         }
       })
-      const currentAssetTexts = assetTexts[selectedAsset.id] ?? []
-      const textFailures = await saveAssetTextDrafts(
+      const textResult = await saveAssetTextDrafts(
         selectedAsset.id,
         assetTextDrafts,
-        currentAssetTexts,
+        assetTexts[selectedAsset.id] ?? [],
       )
-      let refreshedAssetTexts: AssetText[] | null = null
-      try {
-        refreshedAssetTexts = (await getAssetTexts())
-          .filter((item) => item.asset.id === selectedAsset.id)
-      } catch {
-        // The saved texts stay in the editor; the list refreshes on the next load.
-      }
-      const hasTextFailures = textFailures.size > 0 || refreshedAssetTexts === null
-      const hasSaveFailures = hasTextFailures
+      const hasSaveFailures = textResult.failures.size > 0 || failedDraftKeys.size > 0
         || roleResults.some((result) => result.status === 'rejected')
-        || relationResults.some((result) => result.status === 'rejected')
 
-      setAssets((currentAssets) => currentAssets.map((asset) => (
-        asset.id === selectedAsset.id ? assetWithDetails : asset
-      )))
-      setRelations((currentRelations) => {
-        const currentAssetRelations = currentRelations[selectedAsset.id]
-          ?? { publications: [], collections: [] }
+      const written = new Set<ResourceName>()
+      if (updatedAsset.name !== selectedAsset.name) written.add('assets')
+      if (
+        Object.keys(savedRoles).length > 0
+        || relationResults.some((result) => result.status === 'fulfilled')
+      ) {
+        written.add('publicationAssets')
+      }
+      if (textResult.hasChanges) written.add('assetTexts')
+      if (written.size > 0) invalidate(...written)
 
-        return {
-          ...currentRelations,
-          [selectedAsset.id]: {
-            ...currentAssetRelations,
-            publications: [
-              ...publicationRelations.map((relation) => ({
-                ...relation,
-                role: savedRoles[relation.id] ?? relation.role,
-              })),
-              ...savedRelations,
-            ],
-          },
-        }
-      })
-      setSelectedAsset(assetWithDetails)
+      if (!hasSaveFailures) {
+        setIsEditingAsset(false)
+        setSelectedAsset(null)
+        setNewPublicationRelations([])
+        setAssetTextDrafts([])
+        return
+      }
+
       setEditedAssetName(trimmedName)
       setEditedPublicationRoles((currentRoles) => ({ ...currentRoles, ...savedRoles }))
       setNewPublicationRelations((currentDrafts) => currentDrafts.filter(
         (draft) => failedDraftKeys.has(draft.key),
       ))
-      if (refreshedAssetTexts) {
-        const failedDrafts = assetTextDrafts
-          .filter((draft) => textFailures.has(draft.key))
-          .map((draft) => ({ ...draft, error: textFailures.get(draft.key) }))
-        const failedIds = new Set(failedDrafts.map((draft) => draft.id))
-        setAssetTexts((currentTexts) => ({ ...currentTexts, [selectedAsset.id]: refreshedAssetTexts }))
-        setAssetTextDrafts([
-          ...refreshedAssetTexts
-            .filter((item) => !failedIds.has(item.id))
-            .map((item) => toTextDraft(item, nextAssetTextKey.current++)),
-          ...failedDrafts,
-        ])
-      } else {
-        // Without a refresh the saved state is unknown, so report failures on the unsaved drafts.
-        setAssetTextDrafts((drafts) => drafts.map((draft) => (
-          textFailures.has(draft.key) ? { ...draft, error: textFailures.get(draft.key) } : draft
-        )))
-      }
-      if (refreshedAssetTexts === null) {
-        setAssetEditError('Texts were saved, but the list could not be refreshed. Reload the gallery before editing them again.')
-      } else if (hasSaveFailures) {
-        setAssetEditError('Some changes were saved. Review the remaining fields and save again.')
-      } else {
-        setIsEditingAsset(false)
-        setSelectedAsset(null)
-        setNewPublicationRelations([])
-        setAssetTextDrafts([])
-      }
+      // The reloaded texts give the saved drafts their ids; the failed ones stay as drafts.
+      setTextReconcile({
+        assetId: selectedAsset.id,
+        drafts: assetTextDrafts,
+        failures: textResult.failures,
+      })
+      setAssetEditError('Some changes were saved. Review the remaining fields and save again.')
     } catch (saveError) {
       setAssetEditError(getErrorMessage(saveError, 'Could not save asset changes. You can retry.'))
     } finally {
@@ -446,12 +394,81 @@ function Gallery() {
 
   const isAssetsTab = activeGalleryTab === 'assets'
 
-  const handleGalleryTabChange = (tab: string) => {
-    setActiveGalleryTab(tab)
-    // Collections can change the associations shown on each asset.
-    if (tab === 'assets') {
-      setRetryCount((count) => count + 1)
+
+  const handleConfirmDeleteAsset = async () => {
+    if (!pendingDeleteAssets.length) {
+      return
     }
+
+    setIsDeletingAsset(true)
+    setDeleteAssetError('')
+
+    const results: PromiseSettledResult<void>[] = []
+    for (let index = 0; index < pendingDeleteAssets.length; index += 10) {
+      const batch = pendingDeleteAssets.slice(index, index + 10)
+      results.push(...await Promise.allSettled(
+        batch.map((asset) => deleteAssetRequest(asset.id)),
+      ))
+    }
+
+    const deletedIds = new Set<number>()
+    const failedAssets: Asset[] = []
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        deletedIds.add(pendingDeleteAssets[index].id)
+      } else {
+        failedAssets.push(pendingDeleteAssets[index])
+      }
+    })
+
+    if (deletedIds.size > 0) {
+      invalidate('assets')
+      setSelectedAssetIds((currentIds) => new Set(
+        [...currentIds].filter((id) => !deletedIds.has(id)),
+      ))
+      if (selectedAsset && deletedIds.has(selectedAsset.id)) {
+        cancelAssetEdit()
+      }
+    }
+
+    setIsDeletingAsset(false)
+    if (failedAssets.length) {
+      const names = failedAssets.map(getAssetName)
+      setDeleteAssetError(
+        `Could not delete ${names.length === 1 ? `"${names[0]}"` : `${names.length} assets: ${names.join(', ')}`}. They may still have associations.`,
+      )
+      setPendingDeleteAssets(failedAssets)
+    } else {
+      setPendingDeleteAssets([])
+      setDeleteAssetError('')
+      setIsSelectingAssets(false)
+      setSelectedAssetIds(new Set())
+    }
+  }
+
+  const closeDeleteAssetDialog = () => {
+    if (!isDeletingAsset) {
+      setPendingDeleteAssets([])
+      setDeleteAssetError('')
+    }
+  }
+
+  const toggleVisibleAssetSelection = () => {
+    const visibleIds = deletableVisibleAssets.map((asset) => asset.id)
+    const allVisibleSelected = visibleIds.length > 0
+      && visibleIds.every((id) => selectedAssetIds.has(id))
+
+    setSelectedAssetIds((currentIds) => {
+      const nextIds = new Set(currentIds)
+      visibleIds.forEach((id) => {
+        if (allVisibleSelected) {
+          nextIds.delete(id)
+        } else {
+          nextIds.add(id)
+        }
+      })
+      return nextIds
+    })
   }
 
   const downloadFilteredAssets = () => {
@@ -483,7 +500,7 @@ function Gallery() {
       <header className="gallery-header">
         <SectionTabs
           value={activeGalleryTab}
-          onChange={handleGalleryTabChange}
+          onChange={setActiveGalleryTab}
           items={[
             { label: 'Collections', value: 'collections', icon: <CollectionsIcon /> },
             { label: 'Assets', value: 'assets', icon: <ImageOutlinedIcon /> },
@@ -502,12 +519,58 @@ function Gallery() {
           <AssetUploadForm
             collectionRoles={collectionRoles}
             onCancel={() => setIsCreateAssetOpen(false)}
-            onComplete={() => setRetryCount((count) => count + 1)}
             publicationRoles={publicationRoles}
           />
         )}
-        {isAssetsTab && (
+        {isAssetsTab && assets.length > 0 && (
         <div className="gallery-controls">
+          {!isSelectingAssets ? (
+            <button
+              className="gallery-selection-button"
+              onClick={() => setIsSelectingAssets(true)}
+              type="button"
+            >
+              Select assets
+            </button>
+          ) : (
+            <>
+              <button
+                className="gallery-selection-button"
+                disabled={deletableVisibleAssets.length === 0}
+                onClick={toggleVisibleAssetSelection}
+                title="Select or deselect unassociated assets currently visible."
+                type="button"
+              >
+                {allVisibleDeletableAssetsSelected ? 'Deselect' : 'Select'} visible unassociated
+                ({deletableVisibleAssets.length})
+              </button>
+              <span aria-live="polite" className="gallery-selection-count">
+                {selectedDeletableAssets.length} selected
+              </span>
+              <button
+                className="gallery-selection-button gallery-selection-delete"
+                disabled={selectedDeletableAssets.length === 0 || isDeletingAsset}
+                onClick={() => {
+                  setDeleteAssetError('')
+                  setPendingDeleteAssets(selectedDeletableAssets)
+                }}
+                type="button"
+              >
+                <DeleteIcon aria-hidden="true" />
+                Delete selected
+              </button>
+              <button
+                className="gallery-selection-button"
+                onClick={() => {
+                  setIsSelectingAssets(false)
+                  setSelectedAssetIds(new Set())
+                }}
+                type="button"
+              >
+                Cancel selection
+              </button>
+            </>
+          )}
           <label className="gallery-search">
             <SearchIcon aria-hidden="true" />
             <input
@@ -547,7 +610,6 @@ function Gallery() {
         <Collections
           isCreateFormOpen={isCreateCollectionOpen}
           onCreateFormClose={() => setIsCreateCollectionOpen(false)}
-          onCreateFormOpen={() => setIsCreateCollectionOpen(true)}
           publicationCreationFlow={publicationCollectionFlow ? {
             publicationId: publicationCollectionFlow.publicationId,
             onReturn: (createdCollectionId) => navigate(publicationCollectionFlow.returnPath, {
@@ -707,7 +769,7 @@ function Gallery() {
           {isEditingAsset && (
             <footer className="asset-detail-actions">
               <button className="asset-detail-cancel" onClick={cancelAssetEdit} type="button">Cancel</button>
-              <button className="asset-detail-save" disabled={isSavingAsset} type="submit">
+              <button className="asset-detail-save" disabled={isSavingAsset || isRefreshing} type="submit">
                 {isSavingAsset ? 'Saving...' : 'Save'}
               </button>
             </footer>
@@ -719,33 +781,55 @@ function Gallery() {
       {isAssetsTab && error && (
         <div className="gallery-message gallery-error" role="alert">
           <span>{error}</span>
-          <button type="button" onClick={() => setRetryCount((count) => count + 1)}>Retry</button>
+          <button type="button" onClick={() => { setFailedPreviews(new Set()); retry() }}>Retry</button>
         </div>
       )}
 
       {!isAssetsTab ? null : isLoading ? (
         <div className="gallery-message" role="status">Loading assets...</div>
       ) : !error && assets.length === 0 ? (
-        <div className="gallery-message gallery-empty" role="status">
-          <ImageOutlinedIcon aria-hidden="true" />
-          <h2>No assets yet</h2>
-          <p>Uploaded assets will appear here.</p>
-        </div>
+        <EmptyState
+          icon={<ImageOutlinedIcon />}
+          title="No assets yet"
+          description="Uploaded assets will appear here."
+        />
       ) : !error && visibleAssets.length === 0 ? (
-        <div className="gallery-message gallery-empty" role="status">
-          <SearchIcon aria-hidden="true" />
-          <h2>No assets found</h2>
-          <p>Try a different search or type filter.</p>
-        </div>
+        <EmptyState
+          icon={<SearchIcon />}
+          title="No assets found"
+          description="Try a different search or type filter."
+        />
       ) : !error && (
         <section className="asset-grid" aria-label="Assets">
           {visibleAssets.map((asset) => {
-            const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
-            const allRelations = [...assetRelations.publications, ...assetRelations.collections]
+            const associationCount = getAssetAssociationCount(asset)
             const isImage = isPreviewableImage(asset.url)
 
             return (
               <article className="asset-card" key={asset.id}>
+                {isSelectingAssets && (
+                  <input
+                    aria-label={`Select ${getAssetName(asset)}`}
+                    checked={selectedAssetIds.has(asset.id)}
+                    className="asset-card-select"
+                    disabled={associationCount > 0}
+                    onChange={(event) => {
+                      setSelectedAssetIds((currentIds) => {
+                        const nextIds = new Set(currentIds)
+                        if (event.target.checked) {
+                          nextIds.add(asset.id)
+                        } else {
+                          nextIds.delete(asset.id)
+                        }
+                        return nextIds
+                      })
+                    }}
+                    title={associationCount > 0
+                      ? 'Remove associations before deleting this asset.'
+                      : undefined}
+                    type="checkbox"
+                  />
+                )}
                 <button
                   aria-label={`Show actions for ${getAssetName(asset)}`}
                   className="asset-card-open"
@@ -771,8 +855,8 @@ function Gallery() {
                     </span>
                     <span className="asset-type">{asset.type}</span>
                     <span className="asset-relations">
-                      {allRelations.length > 0
-                        ? `${allRelations.length} ${allRelations.length === 1 ? 'association' : 'associations'}`
+                      {associationCount > 0
+                        ? `${associationCount} ${associationCount === 1 ? 'association' : 'associations'}`
                         : 'No associations'}
                     </span>
                   </span>
@@ -803,9 +887,16 @@ function Gallery() {
                         <VisibilityOutlinedIcon aria-hidden="true" /> View
                       </button>
                       <button
-                        disabled
+                        disabled={associationCount > 0}
+                        onClick={() => {
+                          setDeleteAssetError('')
+                          setPendingDeleteAssets([asset])
+                          setActionAsset(null)
+                        }}
                         role="menuitem"
-                        title="Retirement needs a dedicated API operation"
+                        title={associationCount > 0
+                          ? 'Remove associations before deleting this asset.'
+                          : undefined}
                         type="button"
                       >
                         <DeleteIcon aria-hidden="true" /> Remove
@@ -826,6 +917,14 @@ function Gallery() {
         </section>
       )}
 
+      <AssetDeleteDialog
+        assetNames={pendingDeleteAssets.map(getAssetName)}
+        error={deleteAssetError}
+        isDeleting={isDeletingAsset}
+        onClose={closeDeleteAssetDialog}
+        onConfirm={() => void handleConfirmDeleteAsset()}
+        open={pendingDeleteAssets.length > 0}
+      />
     </main>
   )
 }

@@ -7,7 +7,6 @@
 .gallery-header {
     display: flex;
     flex-direction: column;
-    border-bottom: 1px solid #d5d9dc;
 }
 
 .gallery-controls {
@@ -20,6 +19,43 @@
     gap: 10px;
     min-height: 48px;
     padding: 6px 10px;
+}
+
+.gallery-selection-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid #c8cdd1;
+    border-radius: 3px;
+    color: #30373b;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.gallery-selection-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.gallery-selection-button svg {
+    width: 17px;
+    height: 17px;
+}
+
+.gallery-selection-delete {
+    border-color: #a93c3c;
+    color: #8d2929;
+}
+
+.gallery-selection-count {
+    color: #555e64;
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 .gallery-search {
@@ -107,6 +143,22 @@
     min-width: 0;
     overflow: visible;
     background: #73787b;
+}
+
+.asset-card-select {
+    position: absolute;
+    z-index: 2;
+    top: 8px;
+    left: 8px;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #245b8f;
+    cursor: pointer;
+}
+
+.asset-card-select:disabled {
+    cursor: not-allowed;
 }
 
 .asset-card-open {

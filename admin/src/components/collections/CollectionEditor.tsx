@@ -19,7 +19,6 @@ import type {
 } from '../../entities/collection'
 import { getErrorMessage } from '../../services/api-error'
 import {
-  getCollectionAssets,
   saveCollectionAssetDrafts,
   updateCollectionRequest,
 } from '../../services/collections.service'
@@ -29,6 +28,7 @@ import {
   getPreviewUrl,
   isPreviewableImage,
 } from '../assets/asset-utils'
+import { invalidate, type ResourceName } from '../../state/resource-invalidation'
 import RoleCombobox from '../assets/RoleCombobox'
 import DataGrid, { type DataGridColumn } from '../data-display/DataGrid'
 import CollectionAssetPicker from './CollectionAssetPicker'
@@ -40,8 +40,10 @@ type CollectionEditorProps = {
   inventory: Asset[]
   roles: string[]
   typeOptions: string[]
-  // Refresh the parent's data without closing the editor.
-  onChanged: () => void
+  // The collection comes from shared data that is reloading after a write.
+  isRefreshing: boolean
+  // The shared data could not be loaded, so it may not match the server.
+  isStale: boolean
   onSaved: () => void
   onClose: () => void
 }
@@ -70,20 +72,17 @@ function CollectionEditor({
   inventory,
   roles,
   typeOptions,
-  onChanged,
+  isRefreshing,
+  isStale,
   onSaved,
   onClose,
 }: CollectionEditorProps) {
   const nextKey = useRef(collection.assets.length)
-  const [serverAssets, setServerAssets] = useState(collection.assets)
-  const [serverName, setServerName] = useState(collection.name)
   const [name, setName] = useState(collection.name)
-  const [serverType, setServerType] = useState(collection.type)
   const [type, setType] = useState(collection.type)
   const [drafts, setDrafts] = useState(() => toDrafts(collection.assets))
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [isStale, setIsStale] = useState(false)
   const [error, setError] = useState('')
 
   const activeDrafts = drafts.filter((draft) => !draft.isRemoved)
@@ -153,22 +152,22 @@ function CollectionEditor({
 
     setIsSaving(true)
     setError('')
+    const written = new Set<ResourceName>()
 
     try {
-      if (trimmedName !== serverName || trimmedType !== serverType) {
+      if (trimmedName !== collection.name || trimmedType !== collection.type) {
         await updateCollectionRequest(collection.id, trimmedName, trimmedType)
-        setServerName(trimmedName)
-        setServerType(trimmedType)
+        written.add('collections')
       }
 
-      const result = await saveCollectionAssetDrafts(collection.id, drafts, serverAssets)
+      const result = await saveCollectionAssetDrafts(collection.id, drafts, collection.assets)
+      if (result.hasChanges) written.add('collectionAssets')
 
       if (result.failures.size === 0 && !result.orderError) {
         onSaved()
         return
       }
 
-      onChanged()
       setDrafts(drafts.flatMap((draft) => {
         const failure = result.failures.get(draft.key)
 
@@ -191,18 +190,10 @@ function CollectionEditor({
         messages.push(`The assets were saved but the order was not: ${result.orderError}`)
       }
       setError(messages.join(' '))
-
-      try {
-        const fresh = await getCollectionAssets()
-        setServerAssets(fresh.filter((item) => item.collection.id === collection.id))
-      } catch {
-        // Without the saved state another save could duplicate assets.
-        setIsStale(true)
-        setError('Some changes were saved but the list could not be refreshed. Close the editor and open it again before saving.')
-      }
     } catch (saveError) {
       setError(getErrorMessage(saveError, apiMessages.collections.updateFailed))
     } finally {
+      if (written.size > 0) invalidate(...written)
       setIsSaving(false)
     }
   }
@@ -280,9 +271,9 @@ function CollectionEditor({
     {
       header: 'Actions',
       className: 'collection-actions-column',
-      render: ({ draft }) => (
+      render: ({ draft, position }) => (
         <span className="data-grid-actions collection-actions">
-          <Tooltip title="Move up">
+          <Tooltip key={`up-${draft.key}-${position ?? 'removed'}`} title="Move up">
             <span>
               <IconButton
                 aria-label={`Move ${getAssetName(draft.asset)} up`}
@@ -293,7 +284,7 @@ function CollectionEditor({
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Move down">
+          <Tooltip key={`down-${draft.key}-${position ?? 'removed'}`} title="Move down">
             <span>
               <IconButton
                 aria-label={`Move ${getAssetName(draft.asset)} down`}
@@ -354,7 +345,7 @@ function CollectionEditor({
         />
         <div className="collection-form-actions">
           <Button
-            disabled={isSaving || isStale}
+            disabled={isSaving || isRefreshing || isStale}
             onClick={() => void handleSave()}
             startIcon={<CheckIcon />}
             variant="contained"

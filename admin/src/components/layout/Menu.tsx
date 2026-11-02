@@ -16,7 +16,7 @@ const menuItems = [
   { label: 'Gallery', path: '/gallery' },
   { label: 'Clients', path: '/clients' },
   { label: 'Skills', path: '/skills' },
-  { label: 'Settings', path: '/settings' },
+  { label: 'Settings', path: '/settings', disabled: true },
 ]
 
 // Menu component
@@ -42,6 +42,7 @@ function Menu({
             <ListItemButton
               component={NavLink}
               to={item.path}
+              disabled={item.disabled}
               onClick={mobile ? onClose : undefined}
               className="menu-item"
             >

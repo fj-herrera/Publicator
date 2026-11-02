@@ -1,0 +1,30 @@
+.empty-state {
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: #626c71;
+  background: #fff;
+  text-align: center;
+}
+
+.empty-state-icon svg {
+  width: 38px;
+  height: 38px;
+  color: #7e878d;
+}
+
+.empty-state h2 {
+  margin: 0;
+  color: #30383c;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 13px;
+}

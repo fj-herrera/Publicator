@@ -76,3 +76,19 @@
         padding: 16px;
     }
 }
+.context-publications {
+    margin-top: 24px;
+}
+
+.context-publications-title {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+.context-publications-empty {
+    color: #666;
+}
+
+.context-publication-position-column {
+    width: 90px;
+}

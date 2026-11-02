@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   createClientRequest,
   deleteClientRequest,
@@ -7,93 +7,65 @@ import {
 } from '../services/clients.service'
 import { getErrorMessage } from '../services/api-error'
 import { apiMessages } from '../constants/api-messages'
+import { invalidate } from '../state/resource-invalidation'
 import type { Client, ClientInput } from '../entities/client'
+import useResource from './useResource'
 
 function useClients() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let isCurrent = true
-
-    const loadClients = async () => {
-      try {
-        const loadedClients = await getClients()
-        if (isCurrent) {
-          setClients(loadedClients)
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.clients.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadClients()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const { data, isLoading, error: loadError } = useResource<Client[]>(
+    'clients',
+    getClients,
+    apiMessages.clients.loadFailed,
+  )
+  const [actionError, setActionError] = useState('')
 
   const createClient = async (client: ClientInput): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const createdClient = await createClientRequest(client)
-      setClients((currentClients) => [
-        ...currentClients,
-        { ...createdClient, inPublications: 0 },
-      ])
+      await createClientRequest(client)
+      invalidate('clients')
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, apiMessages.clients.createFailed))
+      setActionError(getErrorMessage(createError, apiMessages.clients.createFailed))
       return false
     }
   }
 
   const updateClient = async (id: number, client: ClientInput): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const updatedClient = await updateClientRequest(id, client)
-      setClients((currentClients) => currentClients.map((currentClient) => (
-        currentClient.id === id ? { ...currentClient, ...updatedClient } : currentClient
-      )))
+      await updateClientRequest(id, client)
+      invalidate('clients')
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, apiMessages.clients.updateFailed))
+      setActionError(getErrorMessage(updateError, apiMessages.clients.updateFailed))
       return false
     }
   }
 
   const deleteClient = async (id: number): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
       await deleteClientRequest(id)
-      setClients((currentClients) => currentClients.filter((client) => client.id !== id))
+      invalidate('clients')
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, apiMessages.clients.deleteFailed))
+      setActionError(getErrorMessage(deleteError, apiMessages.clients.deleteFailed))
       return false
     }
   }
 
   return {
-    clients,
+    clients: data ?? [],
     isLoading,
-    error,
+    error: actionError || loadError,
     createClient,
     updateClient,
     deleteClient,
-    clearError: () => setError(''),
+    clearError: () => setActionError(''),
   }
 }
 

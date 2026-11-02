@@ -11,7 +11,8 @@ import { Context } from '../../context/entities/context.entity.js';
 
 @Entity()
 @Unique(['publication', 'context'])
-@Unique(['context', 'position'])
+// Deferred so a reorder can renumber the positions inside one transaction.
+@Unique(['context', 'position'], { deferrable: 'INITIALLY DEFERRED' })
 export class PublicationContext {
     @PrimaryGeneratedColumn('identity', {
         generatedIdentity: 'ALWAYS',

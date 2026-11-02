@@ -11,6 +11,8 @@ export const apiMessages = {
     createFailed: 'Unable to create context.',
     updateFailed: 'Unable to update context.',
     deleteFailed: 'Unable to delete context.',
+    loadPublicationsFailed: 'Unable to load the publications of this context.',
+    reorderFailed: 'Unable to change the order.',
   },
   tags: {
     loadFailed: 'Unable to load tags.',

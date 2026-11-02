@@ -1,0 +1,197 @@
+# PUBLICATOR — PLAN DE PRUEBAS FINALES
+
+**Entorno:** PRE
+**Objetivo:** Validar el mínimo funcional de Publicator antes de cerrar esta fase de desarrollo.
+
+## 1. Estado general
+
+| Área                     | Estado              |
+| ------------------------ | ------------------- |
+| Infraestructura PRE      | OK                  |
+| Types                    | OK                  |
+| Publications             | Parcial             |
+| Gallery / Assets         | Parcial             |
+| Collections              | Parcial             |
+| Asset Texts              | Parcial             |
+| Clients                  | Ciclo multimedia OK |
+| Skills                   | Ciclo multimedia OK |
+| Relaciones entre módulos | Parcial             |
+| Casos negativos          | Pendiente           |
+| Persistencia y regresión | Pendiente           |
+| Validación automatizada  | Parcial             |
+
+**Estados:** OK = superado · PENDIENTE = sin probar · PARCIAL = validación incompleta · INCIDENCIA = comportamiento documentado.
+
+---
+
+## 2. Infraestructura PRE
+
+| ID     | Prueba                               | Estado    |
+| ------ | ------------------------------------ | --------- |
+| INF-01 | Arranque de PostgreSQL, API y Admin  | OK        |
+| INF-02 | Acceso al Admin PRE                  | OK        |
+| INF-03 | Comunicación Admin-API               | OK        |
+| INF-04 | Comunicación API-PostgreSQL          | OK        |
+| INF-05 | Consulta de Assets desde API         | OK        |
+| INF-06 | Reinicio de servicios y recuperación | PENDIENTE |
+
+## 3. Types
+
+| ID     | Prueba                              | Estado    |
+| ------ | ----------------------------------- | --------- |
+| TYP-01 | Crear Type                          | OK        |
+| TYP-02 | Utilizar Types diferentes en textos | OK        |
+| TYP-03 | Editar Type                         | OK        |
+| TYP-04 | Eliminar Type                       | OK        |
+| TYP-05 | Validar duplicados y restricciones  | OK        |
+
+## 4. Publications
+
+| ID     | Prueba                                                     | Estado    |
+| ------ | ---------------------------------------------------------- | --------- |
+| PUB-01 | Crear una publicación completa                             | OK        |
+| PUB-02 | Consultar publicación                                      | OK        |
+| PUB-03 | Editar publicación                                         | PENDIENTE |
+| PUB-04 | Comprobar persistencia tras recarga                        | PENDIENTE |
+| PUB-05 | Asociar Assets                                             | PARCIAL   |
+| PUB-06 | Asociar Collections                                        | OK        |
+| PUB-07 | Eliminar Asset de publicación sin eliminar el Asset global | c       |
+| PUB-08 | Comprobar conservación de relaciones al editar             | PENDIENTE |
+| PUB-09 | Eliminar publicación y comprobar sus relaciones            | PENDIENTE |
+
+## 5. Gallery / Assets
+
+| ID     | Prueba                                                 | Estado    |
+| ------ | ------------------------------------------------------ | --------- |
+| AST-01 | Crear Asset                                            | OK        |
+| AST-02 | Crear segundo Asset                                    | OK        |
+| AST-03 | Editar nombre del Asset                                | OK        |
+| AST-04 | Comprobar que cambiar el nombre no renombra el archivo | OK        |
+| AST-05 | Eliminar Asset con referencias                         | OK        |
+| AST-06 | Eliminar Asset sin referencias y su archivo físico     | OK        |
+| AST-07 | Eliminar relación desde publicación                    | OK        |
+| AST-08 | Eliminar colección sin eliminar Assets globales        | OK        |
+| AST-09 | Consultar galería después de las operaciones           | OK        |
+| AST-10 | Modificar Asset Role                                   | OK        |
+| AST-11 | Gestionar textos asociados                             | PARCIAL   |
+
+## 6. Collections
+
+| ID     | Prueba                                         | Estado    |
+| ------ | ---------------------------------------------- | --------- |
+| COL-01 | Crear colección                                | OK        |
+| COL-02 | Asociar Asset                                  | OK        |
+| COL-03 | Eliminar colección asociada a publicación      | OK        |
+| COL-04 | Comprobar que los Assets permanecen en galería | OK        |
+| COL-05 | Editar colección                               | PENDIENTE |
+| COL-06 | Modificar orden de Assets                      | PENDIENTE |
+| COL-07 | Modificar Asset Role desde colección           | PENDIENTE |
+| COL-08 | Comprobar persistencia                         | PENDIENTE |
+
+## 7. Asset Texts
+
+| ID     | Prueba                            | Estado    |
+| ------ | --------------------------------- | --------- |
+| TXT-01 | Crear texto asociado a Asset      | OK        |
+| TXT-02 | Crear textos con Types diferentes | OK        |
+| TXT-03 | Modificar texto                   | OK        |
+| TXT-04 | Consultar textos asociados        | PENDIENTE |
+| TXT-05 | Eliminar texto                    | PENDIENTE |
+| TXT-06 | Comprobar persistencia            | PENDIENTE |
+
+## 8. Clients
+
+| ID     | Prueba                                               | Estado    |
+| ------ | ---------------------------------------------------- | --------- |
+| CLI-01 | Crear Client de prueba                               | OK        |
+| CLI-02 | Gestionar logo                                       | OK        |
+| CLI-03 | Eliminar Client y comprobar borrado físico del logo  | OK        |
+| CLI-04 | Eliminar Client sin archivo                          | PENDIENTE |
+| CLI-05 | Comprobar eliminación cuando el archivo ya no existe | PENDIENTE |
+
+## 9. Skills
+
+| ID     | Prueba                                              | Estado     |
+| ------ | --------------------------------------------------- | ---------- |
+| SKL-01 | Crear Skill                                         | OK         |
+| SKL-02 | Gestionar icono                                     | OK         |
+| SKL-03 | Crear y gestionar grupo                             | OK         |
+| SKL-04 | Asociar Skills a grupo                              | OK         |
+| SKL-05 | Eliminar grupo y sus asociaciones                   | OK         |
+| SKL-06 | Eliminar Skill y comprobar borrado físico del icono | OK         |
+| SKL-07 | Eliminar Skill sin archivo                          | PENDIENTE  |
+| SKL-08 | Actualización de referencias tras eliminar grupo    | INCIDENCIA |
+
+**Incidencia SKL-08:** después de eliminar un grupo, la galería conserva temporalmente información de asociaciones anteriores. Al refrescar, permite eliminar el Skill. Incidencia documentada para una futura corrección.
+
+## 10. Integridad y casos negativos
+
+| ID     | Prueba                                  | Estado    |
+| ------ | --------------------------------------- | --------- |
+| NEG-01 | Consultar identificador inexistente     | PENDIENTE |
+| NEG-02 | Editar identificador inexistente        | PENDIENTE |
+| NEG-03 | Eliminar identificador inexistente      | PENDIENTE |
+| NEG-04 | Crear registros sin campos obligatorios | PENDIENTE |
+| NEG-05 | Introducir datos duplicados             | PENDIENTE |
+| NEG-06 | Eliminar entidad referenciada           | PARCIAL   |
+| NEG-07 | Asignar archivo gestionado inexistente  | PENDIENTE |
+| NEG-08 | Asignar ruta multimedia inválida        | PENDIENTE |
+| NEG-09 | Comprobar respuestas de validación      | PENDIENTE |
+
+## 11. Persistencia y regresión
+
+| ID     | Prueba                                       | Estado    |
+| ------ | -------------------------------------------- | --------- |
+| REG-01 | Recargar Admin después de crear registros    | PARCIAL   |
+| REG-02 | Navegar entre módulos sin perder estado      | PENDIENTE |
+| REG-03 | Reiniciar API y comprobar persistencia       | PENDIENTE |
+| REG-04 | Reiniciar servicios PRE                      | PENDIENTE |
+| REG-05 | Comprobar relaciones tras reinicio           | PENDIENTE |
+| REG-06 | Limpiar datos de prueba y comprobar archivos | PENDIENTE |
+
+## 12. Validación técnica automatizada
+
+Últimos resultados conocidos de la implementación:
+
+| ID     | Prueba                                       | Resultado                                       |
+| ------ | -------------------------------------------- | ----------------------------------------------- |
+| TEC-01 | Build API                                    | OK                                              |
+| TEC-02 | Tests unitarios                              | OK: 212 tests en 18 archivos                    |
+| TEC-03 | Tests integración multimedia                 | OK: 38/38                                       |
+| TEC-04 | Integración con PostgreSQL real              | OK                                              |
+| TEC-05 | Verificación de PostgreSQL obligatorio en CI | OK                                              |
+| TEC-06 | TypeScript completo                          | Incidencia preexistente en test/app.e2e-spec.ts |
+| TEC-07 | Lint de módulos multimedia                   | Sin errores; 2 warnings preexistentes           |
+| TEC-08 | Build Admin actualizado                      | PENDIENTE de confirmar                          |
+
+## 13. Criterios de cierre
+
+- [ ] Todos los módulos incluidos en el alcance tienen sus operaciones principales verificadas.
+- [ ] Las relaciones entre Publications, Assets y Collections funcionan correctamente.
+- [ ] Los catálogos mantienen la integridad de sus datos.
+- [ ] Los casos negativos principales están comprobados.
+- [ ] La persistencia está verificada tras recarga y reinicio.
+- [ ] Las suites automatizadas están ejecutadas.
+- [ ] Las incidencias conocidas están documentadas y aceptadas.
+- [ ] PRE queda limpio de datos de prueba innecesarios.
+
+**Fuera de alcance:** nuevas funcionalidades, refactorización y mejoras no bloqueantes reservadas para futuras iteraciones.
+
+---
+
+## 14. Registro de pruebas realizadas
+
+| Fecha                  | Prueba                                                   | Resultado              |
+| ---------------------- | -------------------------------------------------------- | ---------------------- |
+| Anterior al 02/11/2026 | Creación de Asset, Type y publicación completa           | OK                     |
+| Anterior al 02/11/2026 | Creación de colección asociada a Asset                   | OK                     |
+| Anterior al 02/11/2026 | Segundo Asset y dos textos de distintos Types            | OK                     |
+| Anterior al 02/11/2026 | Modificación de texto                                    | OK                     |
+| 02/11/2026             | Arranque y acceso a PRE                                  | OK                     |
+| 02/11/2026             | Borrado de Asset y archivo físico                        | OK                     |
+| 02/11/2026             | Eliminación de relaciones desde publicación y colección  | OK                     |
+| 02/11/2026             | Borrado de Client y logo                                 | OK                     |
+| 02/11/2026             | Borrado de Skill e icono                                 | OK                     |
+| 02/11/2026             | Actualización de referencias tras borrar grupo de Skills | INCIDENCIA DOCUMENTADA |
+
+**Nota:** Un OK corresponde a una operación concreta comprobada. No implica que todo el módulo esté validado.

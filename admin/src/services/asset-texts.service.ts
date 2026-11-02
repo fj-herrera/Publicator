@@ -79,12 +79,19 @@ async function getSharedTextIds(): Promise<Set<number>> {
   return new Set([...usages].filter(([, count]) => count > 1).map(([textId]) => textId))
 }
 
-// Returns the error message of each draft that could not be saved, by draft key.
+export type SaveAssetTextsResult = {
+  // Error message of each draft that could not be saved, by draft key.
+  failures: Map<number, string>
+  // True when the API confirmed at least one write.
+  hasChanges: boolean
+}
+
 export async function saveAssetTextDrafts(
   assetId: number,
   drafts: AssetTextDraft[],
   current: AssetText[],
-): Promise<Map<number, string>> {
+): Promise<SaveAssetTextsResult> {
+  let hasChanges = false
   const currentById = new Map(current.map((item) => [item.id, item]))
   const failures = new Map<number, string>()
   const isContentChanged = (draft: AssetTextDraft) => {
@@ -111,6 +118,7 @@ export async function saveAssetTextDrafts(
       if (draft.isRemoved) {
         if (original) {
           await deleteAssetText(original.id)
+          hasChanges = true
         }
         continue
       }
@@ -119,6 +127,7 @@ export async function saveAssetTextDrafts(
         const created = await createText(text, 'PLAIN')
         try {
           await createAssetText(assetId, created.id, role)
+          hasChanges = true
         } catch (error) {
           await deleteText(created.id).catch(() => undefined)
           throw error
@@ -130,6 +139,7 @@ export async function saveAssetTextDrafts(
       if (!isContentChanged(draft)) {
         if (roleChanged) {
           await updateAssetText(original.id, { type: role })
+          hasChanges = true
         }
         continue
       }
@@ -146,12 +156,14 @@ export async function saveAssetTextDrafts(
             textId: copy.id,
             ...(roleChanged ? { type: role } : {}),
           })
+          hasChanges = true
         } catch (error) {
           await deleteText(copy.id).catch(() => undefined)
           throw error
         }
       } else {
         await updateText(original.text.id, text)
+        hasChanges = true
         if (roleChanged) {
           await updateAssetText(original.id, { type: role })
         }
@@ -161,5 +173,5 @@ export async function saveAssetTextDrafts(
     }
   }
 
-  return failures
+  return { failures, hasChanges }
 }

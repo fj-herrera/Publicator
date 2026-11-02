@@ -57,6 +57,29 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+### PostgreSQL integration tests (media files)
+
+`src/modules/media/media-storage.integration.spec.ts` runs against a real, temporary PostgreSQL
+(`embedded-postgres`, no containers, no DEV/PRE database). If the embedded server cannot start, the
+suite is **skipped with a warning** by default, so a green `npm test` does not prove they ran.
+
+To make them mandatory (the suite fails instead of skipping):
+
+```bash
+$ REQUIRE_PG_TESTS=1 npx vitest run src/modules/media/media-storage.integration.spec.ts
+```
+
+`PG_TESTS_SIMULATE_UNAVAILABLE=1` simulates an unavailable PostgreSQL, to check both behaviours
+(exit 0 with skips without `REQUIRE_PG_TESTS`, exit 1 with it).
+
+### Locking and deadlocks
+
+Every transaction that writes a managed media URL takes the row lock (`FOR UPDATE`) first and then at
+most one per-URL advisory lock, before any write; the post-COMMIT cleanup only takes the advisory lock.
+This order has no cycle, and a stress test checks that no `40P01` occurs. If PostgreSQL ever aborted a
+transaction by deadlock it would surface as a 500 and the operation can be repeated manually; there are
+no automatic retries.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

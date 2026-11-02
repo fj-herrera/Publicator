@@ -1,7 +1,10 @@
 import { Alert } from '@mui/material'
 import ContextDeleteDialog from '../components/contexts/ContextDeleteDialog'
 import ContextForm from '../components/contexts/ContextForm'
+import ApartmentIcon from '@mui/icons-material/Apartment'
+import EmptyState from '../components/data-display/EmptyState'
 import ContextList from '../components/contexts/ContextList'
+import ContextPublications from '../components/contexts/ContextPublications'
 import useContextsView from '../hooks/useContextsView'
 
 type ContextsProps = {
@@ -29,6 +32,7 @@ function Contexts({ isCreateFormOpen, onCreateFormClose }: ContextsProps) {
     handleCancelDelete,
     clearSuccessMessage,
   } = useContextsView({ isCreateFormOpen, onCreateFormClose })
+  const selectedContext = contexts.find((context) => context.id === selectedContextId)
 
   return (
     <>
@@ -41,22 +45,48 @@ function Contexts({ isCreateFormOpen, onCreateFormClose }: ContextsProps) {
         </Alert>
       )}
       {isFormOpen ? (
-        <ContextForm
-          key={editingContext?.id ?? 'create'}
-          initialName={editingContext?.name ?? 'New Context'}
-          submitLabel={editingContext ? 'Update' : 'Save'}
-          onSubmit={handleSaveContext}
-          onCancel={handleCancelForm}
-        />
-      ) : (
-        !isContextsLoading && !contextError && contexts.length > 0 && (
-          <ContextList
-            contexts={contexts}
-            selectedContextId={selectedContextId}
-            onContextSelect={setSelectedContextId}
-            onEdit={handleEditContext}
-            onDelete={handleDeleteContext}
+        <>
+          <ContextForm
+            key={editingContext?.id ?? 'create'}
+            initialName={editingContext?.name ?? 'New Context'}
+            submitLabel={editingContext ? 'Update' : 'Save'}
+            onSubmit={handleSaveContext}
+            onCancel={handleCancelForm}
           />
+          {editingContext && (
+            <ContextPublications
+              key={editingContext.id}
+              contextId={editingContext.id}
+              contextName={editingContext.name}
+            />
+          )}
+        </>
+      ) : (
+        !isContextsLoading && !contextError && (
+          contexts.length > 0 ? (
+            <>
+              <ContextList
+                contexts={contexts}
+                selectedContextId={selectedContextId}
+                onContextSelect={setSelectedContextId}
+                onEdit={handleEditContext}
+                onDelete={handleDeleteContext}
+              />
+              {selectedContext && (
+                <ContextPublications
+                  key={selectedContext.id}
+                  contextId={selectedContext.id}
+                  contextName={selectedContext.name}
+                />
+              )}
+            </>
+          ) : (
+            <EmptyState
+              icon={<ApartmentIcon />}
+              title="No contexts yet"
+              description="There are no contexts to show."
+            />
+          )
         )
       )}
       <ContextDeleteDialog

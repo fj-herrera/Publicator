@@ -1,6 +1,8 @@
 import { Alert } from '@mui/material'
 import TagDeleteDialog from '../components/tags/TagDeleteDialog'
 import TagForm from '../components/tags/TagForm'
+import BoltIcon from '@mui/icons-material/Bolt'
+import EmptyState from '../components/data-display/EmptyState'
 import TagList from '../components/tags/TagList'
 import useTagsView from '../hooks/useTagsView'
 
@@ -49,14 +51,22 @@ function Tags({ isCreateFormOpen, onCreateFormClose }: TagsProps) {
           onCancel={handleCancelForm}
         />
       ) : (
-        !isTagsLoading && !tagError && tags.length > 0 && (
-          <TagList
-            tags={tags}
-            selectedTagId={selectedTagId}
-            onTagSelect={setSelectedTagId}
-            onEdit={handleEditTag}
-            onDelete={handleDeleteTag}
-          />
+        !isTagsLoading && !tagError && (
+          tags.length > 0 ? (
+            <TagList
+              tags={tags}
+              selectedTagId={selectedTagId}
+              onTagSelect={setSelectedTagId}
+              onEdit={handleEditTag}
+              onDelete={handleDeleteTag}
+            />
+          ) : (
+            <EmptyState
+              icon={<BoltIcon />}
+              title="No tags yet"
+              description="There are no tags to show."
+            />
+          )
         )
       )}
       <TagDeleteDialog

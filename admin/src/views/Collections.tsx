@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Alert, Button } from '@mui/material'
-import AddIcon from '@mui/icons-material/Add'
+import { Alert } from '@mui/material'
 import CollectionsIcon from '@mui/icons-material/Collections'
 import DownloadIcon from '@mui/icons-material/Download'
 import SearchIcon from '@mui/icons-material/Search'
@@ -14,11 +13,13 @@ import {
 } from '../components/collections/collection-filter-types'
 import CollectionForm from '../components/collections/CollectionForm'
 import CollectionList from '../components/collections/CollectionList'
+import EmptyState from '../components/data-display/EmptyState'
 import { downloadCsv } from '../components/data-display/download-csv'
 import { apiMessages } from '../constants/api-messages'
 import type { CollectionAsset, CollectionRow } from '../entities/collection'
 import useCollectionsData from '../hooks/useCollectionsData'
 import { getErrorMessage } from '../services/api-error'
+import { invalidate } from '../state/resource-invalidation'
 import {
   createCollectionRequest,
   deleteCollectionRequest,
@@ -27,7 +28,6 @@ import {
 
 type CollectionsProps = {
   isCreateFormOpen: boolean
-  onCreateFormOpen: () => void
   onCreateFormClose: () => void
   publicationCreationFlow?: {
     publicationId: number
@@ -46,12 +46,11 @@ function uniqueOptions(options: FilterOption[]) {
 
 function Collections({
   isCreateFormOpen,
-  onCreateFormOpen,
   onCreateFormClose,
   publicationCreationFlow,
   publicationEditFlow,
 }: CollectionsProps) {
-  const { data, isLoading, error, reload } = useCollectionsData()
+  const { data, isLoading, isRefreshing, error } = useCollectionsData()
   const [filters, setFilters] = useState<CollectionFilterValues>(emptyCollectionFilters)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(publicationEditFlow?.collectionId ?? null)
@@ -144,7 +143,7 @@ function Collections({
       setFlowCollectionId(created.id)
       setEditingId(created.id)
     }
-    reload()
+    invalidate('collections')
   }
 
   const finishPublicationCollectionFlow = (collectionId: number) => {
@@ -170,7 +169,7 @@ function Collections({
 
     try {
       await reorderCollectionsRequest(row.publication.id, ids)
-      reload()
+      invalidate('collections')
     } catch (moveError) {
       setActionError(getErrorMessage(moveError, apiMessages.collections.reorderFailed))
     } finally {
@@ -193,7 +192,7 @@ function Collections({
       }
       setPendingDelete(null)
       setSuccessMessage(apiMessages.catalog.deleted('Collection'))
-      reload()
+      invalidate('collections')
     } catch (removeError) {
       setDeleteError(getErrorMessage(removeError, apiMessages.collections.deleteFailed))
     } finally {
@@ -246,7 +245,8 @@ function Collections({
           collection={editingRow}
           inventory={data.assets}
           key={editingRow.id}
-          onChanged={reload}
+          isRefreshing={isRefreshing}
+          isStale={Boolean(error)}
           onClose={() => {
             if (flowCollectionId === editingRow.id) {
               finishPublicationCollectionFlow(editingRow.id)
@@ -260,7 +260,6 @@ function Collections({
             } else {
               setEditingId(null)
               setSuccessMessage('Collection updated successfully.')
-              reload()
             }
           }}
           roles={roles}
@@ -272,16 +271,11 @@ function Collections({
 
       {!isLoading && !error && data && (
         rows.length === 0 ? (
-          <div className="collections-message collections-empty" role="status">
-            <CollectionsIcon aria-hidden="true" />
-            <h2>No collections yet</h2>
-            <p>Create the first collection of a publication.</p>
-            {!isCreateFormOpen && (
-              <Button onClick={onCreateFormOpen} startIcon={<AddIcon />} variant="contained">
-                Create collection
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={<CollectionsIcon />}
+            title="No collections yet"
+            description="There are no collections to show."
+          />
         ) : (
           <>
             <div className="collections-toolbar">
@@ -317,11 +311,11 @@ function Collections({
               />
             )}
             {visibleRows.length === 0 ? (
-              <div className="collections-message collections-empty" role="status">
-                <SearchIcon aria-hidden="true" />
-                <h2>No collections found</h2>
-                <p>Try different filters.</p>
-              </div>
+              <EmptyState
+                icon={<SearchIcon />}
+                title="No collections found"
+                description="Try different filters."
+              />
             ) : (
               <CollectionList
                 onDelete={(row) => {

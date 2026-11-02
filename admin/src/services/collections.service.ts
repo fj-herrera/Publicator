@@ -93,6 +93,8 @@ export type SaveCollectionAssetsResult = {
   // Association id given to each new draft that was saved.
   createdIds: Map<number, number>
   orderError: string
+  // True when the API confirmed at least one write.
+  hasChanges: boolean
 }
 
 export async function saveCollectionAssetDrafts(
@@ -105,6 +107,7 @@ export async function saveCollectionAssetDrafts(
   const createdIds = new Map<number, number>()
   // Final id of every draft whose association exists on the server after this save.
   const existingIds = new Map<number, number>()
+  let hasChanges = false
 
   for (const draft of drafts) {
     const original = draft.id === null ? undefined : currentById.get(draft.id)
@@ -114,6 +117,7 @@ export async function saveCollectionAssetDrafts(
       if (draft.isRemoved) {
         if (original) {
           await deleteCollectionAssetRequest(original.id)
+          hasChanges = true
         }
         continue
       }
@@ -122,12 +126,14 @@ export async function saveCollectionAssetDrafts(
         const created = await createCollectionAssetRequest(collectionId, draft.asset.id, role)
         existingIds.set(draft.key, created.id)
         createdIds.set(draft.key, created.id)
+        hasChanges = true
         continue
       }
 
       existingIds.set(draft.key, original.id)
       if (role !== original.role) {
         await updateCollectionAssetRoleRequest(original.id, role)
+        hasChanges = true
       }
     } catch (error) {
       failures.set(draft.key, getErrorMessage(error, apiMessages.collections.assetFailed))
@@ -149,17 +155,18 @@ export async function saveCollectionAssetDrafts(
     && orderedIds.every((id, index) => id === serverOrder[index])
 
   if (orderedIds.length === 0 || isOrderUnchanged) {
-    return { failures, createdIds, orderError: '' }
+    return { failures, createdIds, orderError: '', hasChanges }
   }
 
   try {
     await reorderCollectionAssetsRequest(collectionId, orderedIds)
-    return { failures, createdIds, orderError: '' }
+    return { failures, createdIds, orderError: '', hasChanges: true }
   } catch (error) {
     return {
       failures,
       createdIds,
       orderError: getErrorMessage(error, apiMessages.collections.reorderFailed),
+      hasChanges,
     }
   }
 }

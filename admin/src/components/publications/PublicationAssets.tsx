@@ -38,6 +38,7 @@ import {
   uploadAssets,
 } from '../../services/assets.service'
 import { getErrorMessage } from '../../services/api-error'
+import { invalidate, type ResourceName } from '../../state/resource-invalidation'
 import {
   formatFileSize,
   getAssetName,
@@ -107,6 +108,7 @@ function PublicationAssetRoleCell({ relation, roles, onSaved, onWorkingChange }:
     onWorkingChange(true)
     try {
       await updatePublicationAssetRole(relation.id, nextRole)
+      invalidate('publicationAssets')
       setRole(nextRole)
       onSaved(nextRole)
     } catch (saveError) {
@@ -194,9 +196,11 @@ function PublicationAssets({
 
     onPendingUploadChange(draft.key, { role: trimmedRole, error: '', isUploading: true })
     let asset: Asset | null = draft.asset
+    const written = new Set<ResourceName>()
     try {
       if (!asset) {
         const uploaded = await uploadAssets([draft.file])
+        if (uploaded.length > 0) written.add('assets')
         asset = uploaded[0] ?? null
         if (!asset) throw new Error('The upload returned no asset.')
         onPendingUploadChange(draft.key, { asset })
@@ -208,6 +212,7 @@ function PublicationAssets({
         publication: { id: number }
         asset: { id: number }
       }
+      written.add('publicationAssets')
       onDirectAssetAdded({ ...created, asset })
       onPendingUploadRemove(draft.key)
     } catch (uploadError) {
@@ -217,6 +222,8 @@ function PublicationAssets({
         error: getErrorMessage(uploadError, 'Could not upload or associate this file.'),
         isUploading: false,
       })
+    } finally {
+      if (written.size > 0) invalidate(...written)
     }
   }
 
@@ -237,6 +244,7 @@ function PublicationAssets({
     onAssetOperationChange(1)
     try {
       await deletePublicationAssetRequest(relation.id)
+      invalidate('publicationAssets')
       onDirectAssetRemove(relation.id)
     } catch (removeError) {
       setTableError((current) => ({

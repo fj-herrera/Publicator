@@ -3,6 +3,8 @@ import { Alert, Button } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ClientDeleteDialog from '../components/clients/ClientDeleteDialog'
 import ClientForm from '../components/clients/ClientForm'
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined'
+import EmptyState from '../components/data-display/EmptyState'
 import ClientList from '../components/clients/ClientList'
 import useClientsView from '../hooks/useClientsView'
 import './clients.css'
@@ -64,14 +66,22 @@ function Clients() {
           onCancel={handleCancelForm}
         />
       ) : (
-        !isClientsLoading && !clientError && clients.length > 0 && (
-          <ClientList
-            clients={clients}
-            selectedClientId={selectedClientId}
-            onClientSelect={setSelectedClientId}
-            onEdit={handleEditClient}
-            onDelete={handleDeleteClient}
-          />
+        !isClientsLoading && !clientError && (
+          clients.length > 0 ? (
+            <ClientList
+              clients={clients}
+              selectedClientId={selectedClientId}
+              onClientSelect={setSelectedClientId}
+              onEdit={handleEditClient}
+              onDelete={handleDeleteClient}
+            />
+          ) : (
+            <EmptyState
+              icon={<BusinessOutlinedIcon />}
+              title="No clients yet"
+              description="There are no clients to show."
+            />
+          )
         )
       )}
       <ClientDeleteDialog

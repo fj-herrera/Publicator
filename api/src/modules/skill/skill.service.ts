@@ -5,6 +5,7 @@ import { UpdateSkillDto } from './dto/update-skill.dto.js';
 import { Repository } from 'typeorm';
 import { Skill } from './entities/skill.entity.js';
 import { SkillGroupSkill } from '../skill-group-skill/entities/skill-group-skill.entity.js';
+import { MediaStorageService, type StoredFile } from '../media/media-storage.service.js';
 
 
 @Injectable()
@@ -15,13 +16,17 @@ export class SkillService {
 
     @InjectRepository(SkillGroupSkill)
     private readonly skillGroupSkillRepository: Repository<SkillGroupSkill>,
+
+    private readonly mediaStorage: MediaStorageService,
   ) {}
 
   async create(createSkillDto: CreateSkillDto): Promise<Skill> {
     try {
-      const skill = this.skillRepository.create(createSkillDto);
+      return await this.skillRepository.manager.transaction(async (manager) => {
+        await this.mediaStorage.assertAssignable(createSkillDto.icon, 'skills/icons', manager);
 
-      return await this.skillRepository.save(skill);
+        return manager.save(Skill, manager.create(Skill, createSkillDto));
+      });
     } catch (error) {
       if (
         error instanceof Error &&
@@ -71,16 +76,39 @@ export class SkillService {
       throw new BadRequestException('No fields to update');
     }
 
-    const skill = await this.skillRepository.findOneBy({ id });
-
-    if (!skill) {
-      throw new NotFoundException(`Skill with id ${id} not found`);
-    }
-
-    Object.assign(skill, updateSkillDto);
+    const filesToDelete: StoredFile[] = [];
 
     try {
-      return await this.skillRepository.save(skill);
+      const saved = await this.skillRepository.manager.transaction(async (manager) => {
+        const skill = await manager.findOne(Skill, {
+          where: { id },
+          lock: { mode: 'pessimistic_write' },
+          loadEagerRelations: false,
+        });
+
+        if (!skill) {
+          throw new NotFoundException(`Skill with id ${id} not found`);
+        }
+
+        const previous = skill.icon;
+        Object.assign(skill, updateSkillDto);
+
+        if (skill.icon !== previous) {
+          await this.mediaStorage.assertAssignable(skill.icon, 'skills/icons', manager);
+        }
+
+        const result = await manager.save(Skill, skill);
+
+        if (previous && previous !== result.icon) {
+          filesToDelete.push({ url: previous, folder: 'skills/icons' });
+        }
+
+        return result;
+      });
+
+      await this.mediaStorage.deleteUnreferencedFiles(filesToDelete);
+
+      return saved;
     } catch (error) {
       if (
         error instanceof Error &&
@@ -97,10 +125,41 @@ export class SkillService {
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.skillRepository.delete(id);
+    const filesToDelete: StoredFile[] = [];
 
-    if (result.affected === 0) {
-      throw new NotFoundException(`Skill with id ${id} not found`);
-    }
+    await this.skillRepository.manager.transaction(async (manager) => {
+      const skill = await manager.findOne(Skill, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+        loadEagerRelations: false,
+      });
+
+      if (!skill) {
+        throw new NotFoundException(`Skill with id ${id} not found`);
+      }
+
+      try {
+        await manager.delete(Skill, id);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          error.code === '23503'
+        ) {
+          throw new ConflictException(
+            'Skill cannot be deleted while it has associations.',
+          );
+        }
+
+        throw error;
+      }
+
+      if (skill.icon) {
+        filesToDelete.push({ url: skill.icon, folder: 'skills/icons' });
+      }
+    });
+
+    // Runs after COMMIT and never throws: a failed unlink leaves an orphan file, never a broken reference.
+    await this.mediaStorage.deleteUnreferencedFiles(filesToDelete);
   }
 }

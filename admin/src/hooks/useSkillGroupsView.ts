@@ -18,7 +18,6 @@ function useSkillGroupsView({
     createSkillGroup,
     updateSkillGroup,
     deleteSkillGroup,
-    refreshSkillGroups,
     clearError,
   } = useSkillGroups()
   const catalog = useCatalogView<SkillGroup, SkillGroupInput>({
@@ -52,7 +51,6 @@ function useSkillGroupsView({
     handleConfirmDelete: catalog.handleConfirmDelete,
     handleCancelDelete: catalog.handleCancelDelete,
     clearSuccessMessage: catalog.clearSuccessMessage,
-    refreshSkillGroups,
   }
 }
 

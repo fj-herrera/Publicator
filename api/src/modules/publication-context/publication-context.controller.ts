@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { PublicationContextService } from './publication-context.service.js';
 import { CreatePublicationContextDto } from './dto/create-publication-context.dto.js';
 import { UpdatePublicationContextDto } from './dto/update-publication-context.dto.js';
+import { ReorderPublicationContextsDto } from './dto/reorder-publication-contexts.dto.js';
 
 @Controller('publication-contexts')
 export class PublicationContextController {
@@ -15,6 +16,11 @@ export class PublicationContextController {
   @Get()
   findAll() {
     return this.publicationContextService.findAll();
+  }
+
+  @Patch('order')
+  reorder(@Body() reorderPublicationContextsDto: ReorderPublicationContextsDto) {
+    return this.publicationContextService.reorder(reorderPublicationContextsDto);
   }
 
   @Get(':id')

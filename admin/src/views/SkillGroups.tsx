@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Alert } from '@mui/material'
+import BubbleChartIcon from '@mui/icons-material/BubbleChart'
 import type { Skill } from '../entities/skill'
 import type { SkillGroup } from '../entities/skill-group'
+import EmptyState from '../components/data-display/EmptyState'
 import SkillGroupDeleteDialog from '../components/skills/SkillGroupDeleteDialog'
 import SkillGroupForm from '../components/skills/SkillGroupForm'
 import SkillGroupList from '../components/skills/SkillGroupList'
@@ -40,7 +42,6 @@ function SkillGroups({
     handleConfirmDelete,
     handleCancelDelete,
     clearSuccessMessage,
-    refreshSkillGroups,
   } = useSkillGroupsView({ isCreateFormOpen, onCreateFormClose })
   const managingSkillGroup = skillGroups.find(
     (group) => group.id === managingSkillGroupId,
@@ -78,18 +79,25 @@ function SkillGroups({
               allSkills={skills}
               isSkillsLoading={isSkillsLoading}
               skillsError={skillsError}
-              onMembershipChange={refreshSkillGroups}
             />
           )}
-          <SkillGroupList
-            skillGroups={visibleSkillGroups}
-            selectedSkillGroupId={managingSkillGroupId}
-            onManage={(group: SkillGroup) => setManagingSkillGroupId(
-              (currentId) => currentId === group.id ? null : group.id,
-            )}
-            onEdit={handleEditSkillGroup}
-            onDelete={handleDeleteSkillGroup}
-          />
+          {visibleSkillGroups.length === 0 ? (
+            <EmptyState
+              icon={<BubbleChartIcon />}
+              title="No skill groups yet"
+              description="There are no skill groups to show."
+            />
+          ) : (
+            <SkillGroupList
+              skillGroups={visibleSkillGroups}
+              selectedSkillGroupId={managingSkillGroupId}
+              onManage={(group: SkillGroup) => setManagingSkillGroupId(
+                (currentId) => currentId === group.id ? null : group.id,
+              )}
+              onEdit={handleEditSkillGroup}
+              onDelete={handleDeleteSkillGroup}
+            />
+          )}
         </>
       )}
       <SkillGroupDeleteDialog

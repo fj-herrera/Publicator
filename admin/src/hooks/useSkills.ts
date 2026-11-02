@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   createSkillRequest,
   deleteSkillRequest,
@@ -7,93 +7,65 @@ import {
 } from '../services/skills.service'
 import { getErrorMessage } from '../services/api-error'
 import { apiMessages } from '../constants/api-messages'
+import { invalidate } from '../state/resource-invalidation'
 import type { Skill, SkillInput } from '../entities/skill'
+import useResource from './useResource'
 
 function useSkills() {
-  const [skills, setSkills] = useState<Skill[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let isCurrent = true
-
-    const loadSkills = async () => {
-      try {
-        const loadedSkills = await getSkills()
-        if (isCurrent) {
-          setSkills(loadedSkills)
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.skills.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadSkills()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const { data, isLoading, error: loadError } = useResource<Skill[]>(
+    'skills',
+    getSkills,
+    apiMessages.skills.loadFailed,
+  )
+  const [actionError, setActionError] = useState('')
 
   const createSkill = async (skill: SkillInput): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const createdSkill = await createSkillRequest(skill)
-      setSkills((currentSkills) => [
-        ...currentSkills,
-        { ...createdSkill, inSkillGroups: 0 },
-      ])
+      await createSkillRequest(skill)
+      invalidate('skills')
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, apiMessages.skills.createFailed))
+      setActionError(getErrorMessage(createError, apiMessages.skills.createFailed))
       return false
     }
   }
 
   const updateSkill = async (id: number, skill: SkillInput): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const updatedSkill = await updateSkillRequest(id, skill)
-      setSkills((currentSkills) => currentSkills.map((currentSkill) => (
-        currentSkill.id === id ? { ...currentSkill, ...updatedSkill } : currentSkill
-      )))
+      await updateSkillRequest(id, skill)
+      invalidate('skills')
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, apiMessages.skills.updateFailed))
+      setActionError(getErrorMessage(updateError, apiMessages.skills.updateFailed))
       return false
     }
   }
 
   const deleteSkill = async (id: number): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
       await deleteSkillRequest(id)
-      setSkills((currentSkills) => currentSkills.filter((skill) => skill.id !== id))
+      invalidate('skills')
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, apiMessages.skills.deleteFailed))
+      setActionError(getErrorMessage(deleteError, apiMessages.skills.deleteFailed))
       return false
     }
   }
 
   return {
-    skills,
+    skills: data ?? [],
     isLoading,
-    error,
+    error: actionError || loadError,
     createSkill,
     updateSkill,
     deleteSkill,
-    clearError: () => setError(''),
+    clearError: () => setActionError(''),
   }
 }
 

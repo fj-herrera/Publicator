@@ -6,6 +6,7 @@ import SectionTabs from '../components/navigation/SectionTabs'
 import SkillDeleteDialog from '../components/skills/SkillDeleteDialog'
 import SkillForm from '../components/skills/SkillForm'
 import SkillList from '../components/skills/SkillList'
+import EmptyState from '../components/data-display/EmptyState'
 import SkillGroups from '../views/SkillGroups'
 import useSkillsView from '../hooks/useSkillsView'
 
@@ -88,13 +89,21 @@ function Skills() {
             />
           )}
           {!isSkillsLoading && !skillError && (
-            <SkillList
-              skills={skills}
-              selectedSkillId={selectedSkillId}
-              onSkillSelect={setSelectedSkillId}
-              onEdit={handleEditSkill}
-              onDelete={handleDeleteSkill}
-            />
+            skills.length === 0 ? (
+              <EmptyState
+                icon={<AddIcon />}
+                title="No skills yet"
+                description="There are no skills to show."
+              />
+            ) : (
+              <SkillList
+                skills={skills}
+                selectedSkillId={selectedSkillId}
+                onSkillSelect={setSelectedSkillId}
+                onEdit={handleEditSkill}
+                onDelete={handleDeleteSkill}
+              />
+            )
           )}
           <SkillDeleteDialog
             open={skillPendingDelete !== null}

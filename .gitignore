@@ -1,3 +1,27 @@
 /media/*
 !/media/.gitkeep
+/media-pre/*
+!/media-pre/.gitkeep
 .env.pre
+
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+
+# Variables de entorno
+.env
+.env.*
+
+# Excepción para plantillas
+!.env.example
+
+# Configuración local
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+
+# Logs
+*.log

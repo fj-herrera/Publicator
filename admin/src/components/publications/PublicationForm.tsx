@@ -33,6 +33,7 @@ import {
   type PublicationFormData,
   type PublicationFormSectionId,
 } from '../../entities/publication-form'
+import { invalidate, type ResourceName } from '../../state/resource-invalidation'
 import usePublicationForm from '../../hooks/usePublicationForm'
 import PublicationMainInfo from './PublicationMainInfo'
 import PublicationAssets from './PublicationAssets'
@@ -114,6 +115,8 @@ function PublicationForm({
     savingLock.current = true
     setIsSavingMainInfo(true)
     setMainInfoSaveError('')
+    // Collected as writes are confirmed so a partial save still refreshes what changed.
+    const written = new Set<ResourceName>()
     try {
       let nextMetaId = metaIdRef.current
       const metaInput = {
@@ -129,20 +132,24 @@ function PublicationForm({
           date: new Date().toISOString().slice(0, 10),
         })
         nextMetaId = createdMeta.id
+        written.add('publications')
         metaIdRef.current = nextMetaId
         setMetaId(nextMetaId)
       } else {
         await updateMetaRequest(nextMetaId, metaInput)
+        written.add('publications')
       }
 
       let nextPublicationId = publicationIdRef.current
       if (nextPublicationId === null) {
         const createdPublication = await createPublicationRequest(mainInfo.typeId, nextMetaId)
         nextPublicationId = createdPublication.id
+        written.add('publications')
         publicationIdRef.current = nextPublicationId
         setPublicationId(nextPublicationId)
       } else {
         await updatePublicationRequest(nextPublicationId, mainInfo.typeId)
+        written.add('publications')
       }
 
       const currentRelations = await getMainInfoRelations()
@@ -153,6 +160,7 @@ function PublicationForm({
       for (const relation of currentContexts) {
         if (!selectedContextIds.has(relation.context.id)) {
           await deletePublicationContextRequest(relation.id)
+          written.add('publicationContexts')
         }
       }
 
@@ -173,6 +181,7 @@ function PublicationForm({
           visible: false,
           featured: false,
         })
+        written.add('publicationContexts')
         lastPositions.set(contextId, created.position)
       }
 
@@ -181,11 +190,15 @@ function PublicationForm({
       )
       const selectedTagIds = new Set(mainInfo.tagIds)
       for (const relation of currentTags) {
-        if (!selectedTagIds.has(relation.tag.id)) await deletePublicationTagRequest(relation.id)
+        if (!selectedTagIds.has(relation.tag.id)) {
+          await deletePublicationTagRequest(relation.id)
+          written.add('publicationTags')
+        }
       }
       for (const tagId of selectedTagIds) {
         if (!currentTags.some((item) => item.tag.id === tagId)) {
           await createPublicationTagRequest(nextPublicationId, tagId)
+          written.add('publicationTags')
         }
       }
 
@@ -196,11 +209,13 @@ function PublicationForm({
       for (const relation of currentSkillGroups) {
         if (!selectedSkillGroupIds.has(relation.skillGroup.id)) {
           await deletePublicationSkillGroupRequest(relation.id)
+          written.add('publicationSkillGroups')
         }
       }
       for (const skillGroupId of selectedSkillGroupIds) {
         if (!currentSkillGroups.some((item) => item.skillGroup.id === skillGroupId)) {
           await createPublicationSkillGroupRequest(nextPublicationId, skillGroupId)
+          written.add('publicationSkillGroups')
         }
       }
 
@@ -210,6 +225,7 @@ function PublicationForm({
       setMainInfoSaveError(getErrorMessage(saveError, 'Could not save Main Info.'))
       return false
     } finally {
+      if (written.size > 0) invalidate(...written)
       savingLock.current = false
       setIsSavingMainInfo(false)
     }

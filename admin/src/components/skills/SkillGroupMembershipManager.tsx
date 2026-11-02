@@ -19,7 +19,6 @@ type SkillGroupMembershipManagerProps = {
   allSkills: Skill[]
   isSkillsLoading: boolean
   skillsError: string
-  onMembershipChange: () => Promise<void>
 }
 
 function SkillGroupMembershipManager({
@@ -27,11 +26,11 @@ function SkillGroupMembershipManager({
   allSkills,
   isSkillsLoading,
   skillsError,
-  onMembershipChange,
 }: SkillGroupMembershipManagerProps) {
   const {
     assignedSkills,
     isLoading: isMembershipLoading,
+    isRefreshing,
     error: membershipError,
     addSkills,
     removeSkills,
@@ -58,7 +57,6 @@ function SkillGroupMembershipManager({
     setSelectedAvailableIds((current) => new Set(
       [...current].filter((id) => !addedSkillIds.includes(id)),
     ))
-    if (addedSkillIds.length > 0) await onMembershipChange()
     setIsUpdating(false)
   }
 
@@ -68,7 +66,6 @@ function SkillGroupMembershipManager({
     setSelectedAssignedIds((current) => new Set(
       [...current].filter((id) => !removedSkillIds.includes(id)),
     ))
-    if (removedSkillIds.length > 0) await onMembershipChange()
     setIsUpdating(false)
   }
 
@@ -89,7 +86,7 @@ function SkillGroupMembershipManager({
           clickable
           aria-pressed={selectedIds.has(skill.id)}
           onClick={() => onToggle(skill.id)}
-          disabled={isUpdating || isDataUnavailable}
+          disabled={isUpdating || isRefreshing || isDataUnavailable}
         />
       )) : (
         <Typography className="skill-membership-empty" variant="body2">
@@ -128,7 +125,7 @@ function SkillGroupMembershipManager({
                 <IconButton
                   aria-label="Remove selected skills"
                   onClick={handleRemove}
-                  disabled={isUpdating || isDataUnavailable || selectedAssignedIds.size === 0}
+                  disabled={isUpdating || isRefreshing || isDataUnavailable || selectedAssignedIds.size === 0}
                 >
                   <ChevronRightIcon />
                 </IconButton>
@@ -139,7 +136,7 @@ function SkillGroupMembershipManager({
                 <IconButton
                   aria-label="Add selected skills"
                   onClick={handleAdd}
-                  disabled={isUpdating || isDataUnavailable || selectedAvailableIds.size === 0}
+                  disabled={isUpdating || isRefreshing || isDataUnavailable || selectedAvailableIds.size === 0}
                 >
                   <ChevronLeftIcon />
                 </IconButton>

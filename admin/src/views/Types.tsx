@@ -1,6 +1,8 @@
 import { Alert } from '@mui/material'
 import TypeDeleteDialog from '../components/types/TypeDeleteDialog'
 import TypeForm from '../components/types/TypeForm'
+import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
+import EmptyState from '../components/data-display/EmptyState'
 import TypeList from '../components/types/TypeList'
 import useTypesView from '../hooks/useTypesView'
 
@@ -49,14 +51,22 @@ function Types({ isCreateFormOpen, onCreateFormClose }: TypesProps) {
           onCancel={handleCancelForm}
         />
       ) : (
-        !isTypesLoading && !typeError && types.length > 0 && (
-          <TypeList
-            types={types}
-            selectedTypeId={selectedTypeId}
-            onTypeSelect={setSelectedTypeId}
-            onEdit={handleEditType}
-            onDelete={handleDeleteType}
-          />
+        !isTypesLoading && !typeError && (
+          types.length > 0 ? (
+            <TypeList
+              types={types}
+              selectedTypeId={selectedTypeId}
+              onTypeSelect={setSelectedTypeId}
+              onEdit={handleEditType}
+              onDelete={handleDeleteType}
+            />
+          ) : (
+            <EmptyState
+              icon={<SpaceDashboardIcon />}
+              title="No types yet"
+              description="There are no types to show."
+            />
+          )
         )
       )}
       <TypeDeleteDialog

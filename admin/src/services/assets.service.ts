@@ -35,6 +35,16 @@ export async function updateAssetName(id: number, name: string): Promise<Asset> 
   return response.json() as Promise<Asset>
 }
 
+export async function deleteAsset(id: number): Promise<void> {
+  const response = await fetch(`/api/assets/${id}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw await getApiError(response, 'Could not delete asset.')
+  }
+}
+
 export function getPublicationAssets() {
   return getList<PublicationAssetRelation>(
     '/api/publication-assets',

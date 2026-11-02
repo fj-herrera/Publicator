@@ -88,7 +88,7 @@ function CollectionList({ rows, onEdit, onDelete, onMove }: CollectionListProps)
       className: 'collection-actions-column',
       render: (row) => (
         <span className="data-grid-actions collection-actions">
-          <Tooltip title="Move up">
+          <Tooltip key={`up-${row.position}`} title="Move up">
             <span>
               <IconButton
                 aria-label={`Move ${label(row)} up`}
@@ -99,7 +99,7 @@ function CollectionList({ rows, onEdit, onDelete, onMove }: CollectionListProps)
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Move down">
+          <Tooltip key={`down-${row.position}`} title="Move down">
             <span>
               <IconButton
                 aria-label={`Move ${label(row)} down`}

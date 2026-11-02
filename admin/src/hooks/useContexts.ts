@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   createContextRequest,
   deleteContextRequest,
@@ -7,93 +7,65 @@ import {
 } from '../services/contexts.service'
 import { getErrorMessage } from '../services/api-error'
 import { apiMessages } from '../constants/api-messages'
+import { invalidate } from '../state/resource-invalidation'
 import type { Context } from '../entities/context'
+import useResource from './useResource'
 
 function useContexts() {
-  const [contexts, setContexts] = useState<Context[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let isCurrent = true
-
-    const loadContexts = async () => {
-      try {
-        const loadedContexts = await getContexts()
-        if (isCurrent) {
-          setContexts(loadedContexts)
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.contexts.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadContexts()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const { data, isLoading, error: loadError } = useResource<Context[]>(
+    'contexts',
+    getContexts,
+    apiMessages.contexts.loadFailed,
+  )
+  const [actionError, setActionError] = useState('')
 
   const createContext = async (name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const createdContext = await createContextRequest(name)
-      setContexts((currentContexts) => [
-        ...currentContexts,
-        { ...createdContext, inPublications: 0 },
-      ])
+      await createContextRequest(name)
+      invalidate('contexts')
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, apiMessages.contexts.createFailed))
+      setActionError(getErrorMessage(createError, apiMessages.contexts.createFailed))
       return false
     }
   }
 
   const updateContext = async (id: number, name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const updatedContext = await updateContextRequest(id, name)
-      setContexts((currentContexts) => currentContexts.map((context) => (
-        context.id === id ? { ...context, ...updatedContext } : context
-      )))
+      await updateContextRequest(id, name)
+      invalidate('contexts')
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, apiMessages.contexts.updateFailed))
+      setActionError(getErrorMessage(updateError, apiMessages.contexts.updateFailed))
       return false
     }
   }
 
   const deleteContext = async (id: number): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
       await deleteContextRequest(id)
-      setContexts((currentContexts) => currentContexts.filter((context) => context.id !== id))
+      invalidate('contexts')
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, apiMessages.contexts.deleteFailed))
+      setActionError(getErrorMessage(deleteError, apiMessages.contexts.deleteFailed))
       return false
     }
   }
 
   return {
-    contexts,
+    contexts: data ?? [],
     isLoading,
-    error,
+    error: actionError || loadError,
     createContext,
     updateContext,
     deleteContext,
-    clearError: () => setError(''),
+    clearError: () => setActionError(''),
   }
 }
 

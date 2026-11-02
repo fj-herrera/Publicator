@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   createTypeRequest,
   deleteTypeRequest,
@@ -7,93 +7,65 @@ import {
 } from '../services/types.service'
 import { getErrorMessage } from '../services/api-error'
 import { apiMessages } from '../constants/api-messages'
+import { invalidate } from '../state/resource-invalidation'
 import type { Type } from '../entities/type'
+import useResource from './useResource'
 
 function useTypes() {
-  const [types, setTypes] = useState<Type[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    let isCurrent = true
-
-    const loadTypes = async () => {
-      try {
-        const loadedTypes = await getTypes()
-        if (isCurrent) {
-          setTypes(loadedTypes)
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.types.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    void loadTypes()
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const { data, isLoading, error: loadError } = useResource<Type[]>(
+    'types',
+    getTypes,
+    apiMessages.types.loadFailed,
+  )
+  const [actionError, setActionError] = useState('')
 
   const createType = async (name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const createdType = await createTypeRequest(name)
-      setTypes((currentTypes) => [
-        ...currentTypes,
-        { ...createdType, inPublications: 0 },
-      ])
+      await createTypeRequest(name)
+      invalidate('types')
       return true
     } catch (createError) {
-      setError(getErrorMessage(createError, apiMessages.types.createFailed))
+      setActionError(getErrorMessage(createError, apiMessages.types.createFailed))
       return false
     }
   }
 
   const updateType = async (id: number, name: string): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
-      const updatedType = await updateTypeRequest(id, name)
-      setTypes((currentTypes) => currentTypes.map((type) => (
-        type.id === id ? { ...type, ...updatedType } : type
-      )))
+      await updateTypeRequest(id, name)
+      invalidate('types')
       return true
     } catch (updateError) {
-      setError(getErrorMessage(updateError, apiMessages.types.updateFailed))
+      setActionError(getErrorMessage(updateError, apiMessages.types.updateFailed))
       return false
     }
   }
 
   const deleteType = async (id: number): Promise<boolean> => {
-    setError('')
+    setActionError('')
 
     try {
       await deleteTypeRequest(id)
-      setTypes((currentTypes) => currentTypes.filter((type) => type.id !== id))
+      invalidate('types')
       return true
     } catch (deleteError) {
-      setError(getErrorMessage(deleteError, apiMessages.types.deleteFailed))
+      setActionError(getErrorMessage(deleteError, apiMessages.types.deleteFailed))
       return false
     }
   }
 
   return {
-    types,
+    types: data ?? [],
     isLoading,
-    error,
+    error: actionError || loadError,
     createType,
     updateType,
     deleteType,
-    clearError: () => setError(''),
+    clearError: () => setActionError(''),
   }
 }
 

@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity.js';
 import { Publication } from '../publication/entities/publication.entity.js';
+import { MediaStorageService, type StoredFile } from '../media/media-storage.service.js';
 
 
 @Injectable()
@@ -15,13 +16,17 @@ export class ClientService {
 
     @InjectRepository(Publication)
     private readonly publicationRepository: Repository<Publication>,
+
+    private readonly mediaStorage: MediaStorageService,
   ) {}
 
   async create(createClientDto: CreateClientDto): Promise<Client> {
     try {
-      const client = this.clientRepository.create(createClientDto);
+      return await this.clientRepository.manager.transaction(async (manager) => {
+        await this.mediaStorage.assertAssignable(createClientDto.logo, 'clients', manager);
 
-      return await this.clientRepository.save(client);
+        return manager.save(Client, manager.create(Client, createClientDto));
+      });
     } catch (error) {
       if (
         error instanceof Error &&
@@ -73,16 +78,39 @@ export class ClientService {
       throw new BadRequestException('No fields to update');
     }
 
-    const client = await this.clientRepository.findOneBy({ id });
-
-    if (!client) {
-      throw new NotFoundException(`Client with id ${id} not found`);
-    }
-
-    Object.assign(client, updateClientDto);
+    const filesToDelete: StoredFile[] = [];
 
     try {
-      return await this.clientRepository.save(client);
+      const saved = await this.clientRepository.manager.transaction(async (manager) => {
+        const client = await manager.findOne(Client, {
+          where: { id },
+          lock: { mode: 'pessimistic_write' },
+          loadEagerRelations: false,
+        });
+
+        if (!client) {
+          throw new NotFoundException(`Client with id ${id} not found`);
+        }
+
+        const previous = client.logo;
+        Object.assign(client, updateClientDto);
+
+        if (client.logo !== previous) {
+          await this.mediaStorage.assertAssignable(client.logo, 'clients', manager);
+        }
+
+        const result = await manager.save(Client, client);
+
+        if (previous && previous !== result.logo) {
+          filesToDelete.push({ url: previous, folder: 'clients' });
+        }
+
+        return result;
+      });
+
+      await this.mediaStorage.deleteUnreferencedFiles(filesToDelete);
+
+      return saved;
     } catch (error) {
       if (
         error instanceof Error &&
@@ -99,10 +127,41 @@ export class ClientService {
   }
 
   async remove(id: number): Promise<void> {
-    const result = await this.clientRepository.delete(id);
+    const filesToDelete: StoredFile[] = [];
 
-    if (result.affected === 0) {
-      throw new NotFoundException(`Client with id ${id} not found`);
-    }
+    await this.clientRepository.manager.transaction(async (manager) => {
+      const client = await manager.findOne(Client, {
+        where: { id },
+        lock: { mode: 'pessimistic_write' },
+        loadEagerRelations: false,
+      });
+
+      if (!client) {
+        throw new NotFoundException(`Client with id ${id} not found`);
+      }
+
+      try {
+        await manager.delete(Client, id);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          error.code === '23503'
+        ) {
+          throw new ConflictException(
+            'Client cannot be deleted while it has associations.',
+          );
+        }
+
+        throw error;
+      }
+
+      if (client.logo) {
+        filesToDelete.push({ url: client.logo, folder: 'clients' });
+      }
+    });
+
+    // Runs after COMMIT and never throws: a failed unlink leaves an orphan file, never a broken reference.
+    await this.mediaStorage.deleteUnreferencedFiles(filesToDelete);
   }
 }

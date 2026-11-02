@@ -4,6 +4,7 @@ import RoleCombobox from '../assets/RoleCombobox'
 import type { DirectPublicationAssetDraft } from '../../entities/publication-form'
 import { updateAssetName, updatePublicationAssetRole } from '../../services/assets.service'
 import { getErrorMessage } from '../../services/api-error'
+import { invalidate, type ResourceName } from '../../state/resource-invalidation'
 
 type PublicationDirectAssetEditDialogProps = {
   relation: DirectPublicationAssetDraft
@@ -40,14 +41,17 @@ function PublicationDirectAssetEditDialog({
     setIsSaving(true)
     setError('')
     let nextRelation = relation
+    const written = new Set<ResourceName>()
     try {
       if (nextName !== (relation.asset.name ?? '').trim()) {
         const asset = await updateAssetName(relation.asset.id, nextName)
+        written.add('assets')
         nextRelation = { ...nextRelation, asset: { ...relation.asset, ...asset } }
         onSaved(nextRelation)
       }
       if (nextRole !== relation.role) {
         await updatePublicationAssetRole(relation.id, nextRole)
+        written.add('publicationAssets')
         nextRelation = { ...nextRelation, role: nextRole }
         onSaved(nextRelation)
       }
@@ -55,6 +59,7 @@ function PublicationDirectAssetEditDialog({
     } catch (saveError) {
       setError(getErrorMessage(saveError, 'Could not update this asset.'))
     } finally {
+      if (written.size > 0) invalidate(...written)
       setIsSaving(false)
     }
   }

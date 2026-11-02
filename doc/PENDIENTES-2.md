@@ -38,3 +38,23 @@ La compilación terminó correctamente. No es un error bloqueante ni impide el d
 La tarea no se considera resuelta hasta haber revisado el análisis del bundle, aplicado las optimizaciones justificadas y comprobado el nuevo tamaño generado.
 
 **Nota:** No realizar optimizaciones arbitrarias únicamente para eliminar el aviso de Vite. Priorizar una división de código coherente con la arquitectura del Admin.
+
+Incidencia: actualización de referencias al eliminar un grupo de Skills
+
+Entorno: PRE
+
+Comportamiento observado:
+
+Se elimina un grupo de Skills.
+
+Se accede a la galería de Skills y se intenta eliminar uno de los Skills que pertenecía al grupo.
+
+La aplicación sigue impidiendo su eliminación, como si todavía existiera la asociación.
+
+Al refrescar la página, ya permite eliminarlo correctamente.
+
+Comportamiento esperado:
+Al eliminar un grupo, las referencias de sus Skills deben actualizarse inmediatamente en la interfaz, sin necesidad de refrescar la página.
+
+Observación técnica:
+Posible estado obsoleto en el frontend tras eliminar el grupo. Revisar la actualización o invalidación de los datos de Skills y sus relaciones.

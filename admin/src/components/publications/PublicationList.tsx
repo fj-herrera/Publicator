@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import TuneIcon from '@mui/icons-material/Tune'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
+import PushPinIcon from '@mui/icons-material/PushPin'
 import SearchIcon from '@mui/icons-material/Search'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
@@ -42,7 +43,9 @@ import type {
 import { getErrorMessage } from '../../services/api-error'
 import { deletePublicationRequest } from '../../services/publications.service'
 import usePublicationsData from '../../hooks/usePublicationsData'
+import { invalidateDeleted } from '../../state/resource-invalidation'
 import { getPreviewUrl, isPreviewableImage } from '../assets/asset-utils'
+import EmptyState from '../data-display/EmptyState'
 import './publications.css'
 
 type FilterOption = { id: string; label: string }
@@ -203,7 +206,7 @@ function formatDate(value: string) {
 
 function PublicationList() {
   const navigate = useNavigate()
-  const { data, isLoading, error, reload } = usePublicationsData()
+  const { data, isLoading, error, retry } = usePublicationsData()
   const [filters, setFilters] = useState(initialFilters)
   const [showFilters, setShowFilters] = useState(false)
   const [search, setSearch] = useState('')
@@ -395,7 +398,7 @@ function PublicationList() {
       await deletePublicationRequest(pendingDelete.id)
       setSuccessMessage(`Publication "${pendingDelete.meta.title}" deleted.`)
       setPendingDelete(null)
-      reload()
+      invalidateDeleted('publications')
     } catch (deleteFailure) {
       setDeleteError(getErrorMessage(deleteFailure, 'Could not delete publication.'))
     } finally {
@@ -412,7 +415,7 @@ function PublicationList() {
       )}
       {error ? (
         <Alert
-          action={<Button color="inherit" onClick={reload} size="small">Retry</Button>}
+          action={<Button color="inherit" onClick={retry} size="small">Retry</Button>}
           className="publication-list-message"
           severity="error"
         >
@@ -421,10 +424,11 @@ function PublicationList() {
       ) : isLoading ? (
         <div className="publication-list-loading"><CircularProgress size={28} /><span>Loading publications</span></div>
       ) : data && data.publications.length === 0 ? (
-        <div className="publication-list-empty">
-          <h2>No publications yet</h2>
-          <p>There are no publications to show.</p>
-        </div>
+        <EmptyState
+          icon={<PushPinIcon />}
+          title="No publications yet"
+          description="There are no publications to show."
+        />
       ) : (
         <>
           <div className="publication-list-toolbar">
@@ -507,10 +511,11 @@ function PublicationList() {
             </div>
           )}
           {filteredRows.length === 0 ? (
-            <div className="publication-list-empty publication-list-no-results">
-              <h2>No publications found</h2>
-              <p>Try changing the search or filters.</p>
-            </div>
+            <EmptyState
+              icon={<SearchIcon />}
+              title="No publications found"
+              description="Try changing the search or filters."
+            />
           ) : (
             <div className="publication-table-wrap">
               <TableContainer>

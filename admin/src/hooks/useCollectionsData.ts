@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import type { Asset, PublicationAssetTarget } from '../entities/asset'
 import type {
   Collection,
   CollectionAsset,
   PublicationContextLink,
 } from '../entities/collection'
-import { getErrorMessage } from '../services/api-error'
 import { getAssets, getPublications } from '../services/assets.service'
 import {
   getCollectionAssets,
@@ -13,6 +12,7 @@ import {
   getPublicationContexts,
 } from '../services/collections.service'
 import { apiMessages } from '../constants/api-messages'
+import useResource from './useResource'
 
 export type CollectionsData = {
   collections: Collection[]
@@ -22,48 +22,39 @@ export type CollectionsData = {
   publications: PublicationAssetTarget[]
 }
 
+const loadFailed = apiMessages.collections.loadFailed
+
 function useCollectionsData() {
-  const [data, setData] = useState<CollectionsData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [reloadCount, setReloadCount] = useState(0)
+  const collections = useResource('collections', getCollections, loadFailed)
+  const collectionAssets = useResource('collectionAssets', getCollectionAssets, loadFailed)
+  const contexts = useResource('publicationContexts', getPublicationContexts, loadFailed)
+  const assets = useResource('assets', getAssets, loadFailed)
+  const publications = useResource('publications', getPublications, loadFailed)
+  const parts = [collections, collectionAssets, contexts, assets, publications]
 
-  useEffect(() => {
-    let isCurrent = true
-
-    const load = async () => {
-      try {
-        const [collections, collectionAssets, contexts, assets, publications] = await Promise.all([
-          getCollections(),
-          getCollectionAssets(),
-          getPublicationContexts(),
-          getAssets(),
-          getPublications(),
-        ])
-
-        if (isCurrent) {
-          setData({ collections, collectionAssets, contexts, assets, publications })
-          setError('')
-        }
-      } catch (loadError) {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, apiMessages.collections.loadFailed))
-        }
-      } finally {
-        if (isCurrent) {
-          setIsLoading(false)
-        }
-      }
+  const data = useMemo<CollectionsData | null>(() => {
+    if (
+      !collections.data || !collectionAssets.data || !contexts.data
+      || !assets.data || !publications.data
+    ) {
+      return null
     }
 
-    void load()
-
-    return () => {
-      isCurrent = false
+    return {
+      collections: collections.data,
+      collectionAssets: collectionAssets.data,
+      contexts: contexts.data,
+      assets: assets.data,
+      publications: publications.data,
     }
-  }, [reloadCount])
+  }, [collections.data, collectionAssets.data, contexts.data, assets.data, publications.data])
 
-  return { data, isLoading, error, reload: () => setReloadCount((count) => count + 1) }
+  return {
+    data,
+    isLoading: parts.some((part) => part.isLoading),
+    isRefreshing: parts.some((part) => part.isRefreshing),
+    error: parts.find((part) => part.error)?.error ?? '',
+  }
 }
 
 export default useCollectionsData

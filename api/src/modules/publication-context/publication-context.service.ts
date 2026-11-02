@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { PublicationContext } from './entities/publication-context.entity.js';
 import { CreatePublicationContextDto } from './dto/create-publication-context.dto.js';
 import { UpdatePublicationContextDto } from './dto/update-publication-context.dto.js';
+import { ReorderPublicationContextsDto } from './dto/reorder-publication-contexts.dto.js';
 import { Publication } from '../../modules/publication/entities/publication.entity.js';
 import { Context } from '../../modules/context/entities/context.entity.js';
 
@@ -218,6 +219,54 @@ export class PublicationContextService {
     throw error;
   }
 }
+
+  async reorder(
+    reorderDto: ReorderPublicationContextsDto,
+  ): Promise<PublicationContext[]> {
+    const { contextId, ids } = reorderDto;
+
+    const context = await this.contextRepository.findOneBy({ id: contextId });
+
+    if (!context) {
+      throw new NotFoundException(`Context with id ${contextId} not found`);
+    }
+
+    const current = await this.publicationContextRepository.find({
+      where: { context: { id: contextId } },
+    });
+    const currentIds = new Set(current.map((item) => item.id));
+
+    if (ids.length !== currentIds.size || ids.some((id) => !currentIds.has(id))) {
+      throw new BadRequestException(
+        `ids must list every publication of Context ${contextId} exactly once`,
+      );
+    }
+
+    const temporaryPositionStart =
+      Math.max(0, ...current.map((item) => item.position)) + 1;
+
+    await this.publicationContextRepository.manager.transaction(
+      async (manager) => {
+        for (const [index, id] of ids.entries()) {
+          await manager.update(PublicationContext, id, {
+            position: temporaryPositionStart + index,
+          });
+        }
+
+        for (const [index, id] of ids.entries()) {
+          await manager.update(PublicationContext, id, {
+            position: index + 1,
+          });
+        }
+      },
+    );
+
+    return this.publicationContextRepository.find({
+      where: { context: { id: contextId } },
+      relations: { publication: true, context: true },
+      order: { position: 'ASC' },
+    });
+  }
 
   async remove(id: number): Promise<void> {
     const result =

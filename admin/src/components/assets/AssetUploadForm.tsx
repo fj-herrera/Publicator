@@ -1,13 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import RoleCombobox from './RoleCombobox'
-import type {
-  Asset,
-  CollectionAssetTarget,
-  PublicationAssetTarget,
-} from '../../entities/asset'
 import {
   createAssetCollection,
   createPublicationAsset,
@@ -16,7 +11,11 @@ import {
   uploadAssets,
 } from '../../services/assets.service'
 import { getErrorMessage } from '../../services/api-error'
+import { invalidate, type ResourceName } from '../../state/resource-invalidation'
+import useResource from '../../hooks/useResource'
 import './asset-upload-form.css'
+
+const targetsLoadFailed = 'Could not load association options.'
 
 type AssociationKind = 'none' | 'publication' | 'collection'
 
@@ -24,7 +23,6 @@ interface AssetUploadFormProps {
   publicationRoles: string[]
   collectionRoles: string[]
   onCancel: () => void
-  onComplete: (assets: Asset[]) => void
 }
 
 const acceptedExtensions = new Set([
@@ -53,45 +51,22 @@ function AssetUploadForm({
   publicationRoles,
   collectionRoles,
   onCancel,
-  onComplete,
 }: AssetUploadFormProps) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
   const [associationKind, setAssociationKind] = useState<AssociationKind>('none')
   const [associationId, setAssociationId] = useState('')
   const [role, setRole] = useState('')
-  const [publications, setPublications] = useState<PublicationAssetTarget[]>([])
-  const [collections, setCollections] = useState<CollectionAssetTarget[]>([])
-  const [isLoadingTargets, setIsLoadingTargets] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    let isCurrent = true
-
-    Promise.all([getPublications(), getCollections()])
-      .then(([loadedPublications, loadedCollections]) => {
-        if (isCurrent) {
-          setPublications(loadedPublications)
-          setCollections(loadedCollections)
-        }
-      })
-      .catch((loadError: unknown) => {
-        if (isCurrent) {
-          setError(getErrorMessage(loadError, 'Could not load association options.'))
-        }
-      })
-      .finally(() => {
-        if (isCurrent) {
-          setIsLoadingTargets(false)
-        }
-      })
-
-    return () => {
-      isCurrent = false
-    }
-  }, [])
+  const publicationTargets = useResource('publications', getPublications, targetsLoadFailed)
+  const collectionTargets = useResource('collections', getCollections, targetsLoadFailed)
+  const publications = publicationTargets.data ?? []
+  const collections = collectionTargets.data ?? []
+  const isLoadingTargets = publicationTargets.isLoading || collectionTargets.isLoading
+  const targetsError = publicationTargets.error || collectionTargets.error
 
   const roleOptions = associationKind === 'publication'
     ? publicationRoles
@@ -132,6 +107,7 @@ function AssetUploadForm({
 
     try {
       const uploadedAssets = await uploadAssets(files)
+      const written = new Set<ResourceName>(['assets'])
 
       if (associationKind !== 'none' && associationId) {
         const associationResults = await Promise.allSettled(uploadedAssets.map((asset) => (
@@ -140,8 +116,11 @@ function AssetUploadForm({
             : createAssetCollection(asset.id, Number(associationId), role.trim())
         )))
         const hasAssociationErrors = associationResults.some((result) => result.status === 'rejected')
+        if (associationResults.some((result) => result.status === 'fulfilled')) {
+          written.add(associationKind === 'publication' ? 'publicationAssets' : 'collectionAssets')
+        }
 
-        onComplete(uploadedAssets)
+        invalidate(...written)
         setFiles([])
 
         if (hasAssociationErrors) {
@@ -149,7 +128,7 @@ function AssetUploadForm({
           return
         }
       } else {
-        onComplete(uploadedAssets)
+        invalidate(...written)
       }
 
       onCancel()
@@ -269,7 +248,9 @@ function AssetUploadForm({
           </ul>
         )}
 
-        {error && <p className="asset-upload-error" role="alert">{error}</p>}
+        {(error || targetsError) && (
+          <p className="asset-upload-error" role="alert">{error || targetsError}</p>
+        )}
 
         <div className="asset-upload-actions">
           <button className="asset-upload-cancel" onClick={onCancel} type="button">Cancel</button>

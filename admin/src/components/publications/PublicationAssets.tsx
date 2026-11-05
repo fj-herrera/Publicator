@@ -4,6 +4,11 @@ import {
   Alert,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   Table,
   TableBody,
@@ -31,6 +36,7 @@ import type {
   DirectPublicationAssetDraft,
 } from '../../entities/publication-form'
 import type { Collection } from '../../entities/collection'
+import { deleteCollectionRequest } from '../../services/collections.service'
 import { deletePublicationAssetRequest } from '../../services/publication-form.service'
 import {
   createPublicationAsset,
@@ -166,10 +172,20 @@ function PublicationAssets({
   const [editingAsset, setEditingAsset] = useState<DirectPublicationAssetDraft | null>(null)
   const [failedPreviews, setFailedPreviews] = useState<Set<number>>(() => new Set())
   const [busyDirectOperations, setBusyDirectOperations] = useState(0)
+  const [collectionPendingDelete, setCollectionPendingDelete] = useState<Collection | null>(null)
+  const [isDeletingCollection, setIsDeletingCollection] = useState(false)
+  const [collectionDeleteError, setCollectionDeleteError] = useState('')
+  const [collectionDeleteSuccess, setCollectionDeleteSuccess] = useState('')
+  const [deletedCollectionIds, setDeletedCollectionIds] = useState<Set<number>>(() => new Set())
 
   const selectedCollections = values.collectionIds
     .map((id) => collections.find((collection) => collection.id === id))
-    .filter((collection): collection is Collection => collection !== undefined)
+    .filter((collection): collection is Collection => (
+      collection !== undefined && !deletedCollectionIds.has(collection.id)
+    ))
+  const availableCollections = collections.filter(
+    (collection) => !deletedCollectionIds.has(collection.id),
+  )
   const roleOptions = [...new Set([
     ...publicationRoles,
     ...values.directAssets.map((relation) => relation.role),
@@ -182,6 +198,27 @@ function PublicationAssets({
     onFilesSelected(files.filter((file) => (
       !currentKeys.has(`${file.name}:${file.size}:${file.lastModified}`)
     )))
+  }
+
+  const confirmDeleteCollection = async () => {
+    if (!collectionPendingDelete) return
+
+    setIsDeletingCollection(true)
+    setCollectionDeleteError('')
+    try {
+      await deleteCollectionRequest(collectionPendingDelete.id)
+      invalidate('collections')
+      setDeletedCollectionIds((current) => new Set(current).add(collectionPendingDelete.id))
+      onValuesChange({
+        collectionIds: values.collectionIds.filter((id) => id !== collectionPendingDelete.id),
+      })
+      setCollectionDeleteSuccess(`Collection "${collectionPendingDelete.name}" deleted successfully.`)
+      setCollectionPendingDelete(null)
+    } catch (deleteError) {
+      setCollectionDeleteError(getErrorMessage(deleteError, 'Could not delete collection.'))
+    } finally {
+      setIsDeletingCollection(false)
+    }
   }
 
   const submitUpload = async (draft: DirectAssetUploadDraft, role: string) => {
@@ -261,6 +298,11 @@ function PublicationAssets({
     <div className="publication-assets">
       {completionError && <Alert severity="error">{completionError}</Alert>}
       <section className="publication-assets-collections" aria-labelledby="publication-collections-heading">
+        {collectionDeleteSuccess && (
+          <Alert onClose={() => setCollectionDeleteSuccess('')} severity="success">
+            {collectionDeleteSuccess}
+          </Alert>
+        )}
         <div className="publication-assets-section-heading">
           <h3 id="publication-collections-heading">Collections</h3>
           <Button
@@ -278,12 +320,23 @@ function PublicationAssets({
           isOptionEqualToValue={(option, value) => option.id === value.id}
           multiple
           onChange={(_event, next) => onValuesChange({ collectionIds: next.map(({ id }) => id) })}
-          options={collections}
+          options={availableCollections}
           renderValue={(selected, getItemProps) => selected.map((collection, index) => {
             const { key, ...itemProps } = getItemProps({ index })
             return (
               <span className="publication-collection-chip" key={key}>
-                <Chip {...itemProps} label={collection.name} />
+                <Tooltip title={`Delete ${collection.name}`}>
+                  <Chip
+                    {...itemProps}
+                    aria-label={`Delete collection ${collection.name}`}
+                    deleteIcon={<DeleteIcon />}
+                    label={collection.name}
+                    onDelete={() => {
+                      setCollectionDeleteError('')
+                      setCollectionPendingDelete(collection)
+                    }}
+                  />
+                </Tooltip>
                 <Tooltip title={`Edit ${collection.name}`}>
                   <IconButton
                     aria-label={`Edit collection ${collection.name}`}
@@ -305,6 +358,40 @@ function PublicationAssets({
           renderInput={(params) => <TextField {...params} label="Collections" />}
           value={selectedCollections}
         />
+        <Dialog
+          aria-labelledby="publication-delete-collection-title"
+          onClose={() => {
+            if (!isDeletingCollection) setCollectionPendingDelete(null)
+          }}
+          open={collectionPendingDelete !== null}
+        >
+          <DialogTitle id="publication-delete-collection-title">Delete collection?</DialogTitle>
+          <DialogContent>
+            {collectionDeleteError && <Alert severity="error">{collectionDeleteError}</Alert>}
+            <DialogContentText>
+              {collectionPendingDelete
+                ? `Delete "${collectionPendingDelete.name}"? Its assets will stay in the gallery.`
+                : ''}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              disabled={isDeletingCollection}
+              onClick={() => setCollectionPendingDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="error"
+              disabled={isDeletingCollection}
+              onClick={() => void confirmDeleteCollection()}
+              startIcon={<DeleteIcon />}
+              variant="contained"
+            >
+              {isDeletingCollection ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </section>
 
       <section className="publication-assets-direct" aria-labelledby="publication-direct-assets-heading">

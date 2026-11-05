@@ -9,12 +9,12 @@
 | ------------------------ | ------------------- |
 | Infraestructura PRE      | OK                  |
 | Types                    | OK                  |
-| Publications             | Parcial             |
-| Gallery / Assets         | Parcial             |
-| Collections              | Parcial             |
+| Publications             | OK                  |
+| Gallery / Assets         | OK                  |
+| Collections              | OK                  |
 | Asset Texts              | Parcial             |
-| Clients                  | Ciclo multimedia OK |
-| Skills                   | Ciclo multimedia OK |
+| Clients                  | OK                  |
+| Skills                   | OK                  |
 | Relaciones entre módulos | Parcial             |
 | Casos negativos          | Pendiente           |
 | Persistencia y regresión | Pendiente           |
@@ -24,7 +24,7 @@
 
 ---
 
-## 2. Infraestructura PRE
+## 2. Infraestructura PRE ✅
 
 | ID     | Prueba                               | Estado    |
 | ------ | ------------------------------------ | --------- |
@@ -33,9 +33,9 @@
 | INF-03 | Comunicación Admin-API               | OK        |
 | INF-04 | Comunicación API-PostgreSQL          | OK        |
 | INF-05 | Consulta de Assets desde API         | OK        |
-| INF-06 | Reinicio de servicios y recuperación | PENDIENTE |
+| INF-06 | Reinicio de servicios y recuperación | OK        |
 
-## 3. Types
+## 3. Types ✅
 
 | ID     | Prueba                              | Estado    |
 | ------ | ----------------------------------- | --------- |
@@ -45,21 +45,21 @@
 | TYP-04 | Eliminar Type                       | OK        |
 | TYP-05 | Validar duplicados y restricciones  | OK        |
 
-## 4. Publications
+## 4. Publications ✅
 
 | ID     | Prueba                                                     | Estado    |
 | ------ | ---------------------------------------------------------- | --------- |
 | PUB-01 | Crear una publicación completa                             | OK        |
 | PUB-02 | Consultar publicación                                      | OK        |
-| PUB-03 | Editar publicación                                         | PENDIENTE |
-| PUB-04 | Comprobar persistencia tras recarga                        | PENDIENTE |
-| PUB-05 | Asociar Assets                                             | PARCIAL   |
+| PUB-03 | Editar publicación                                         | OK        |
+| PUB-04 | Comprobar persistencia tras recarga                        | OK        |
+| PUB-05 | Asociar Assets                                             | OK        |
 | PUB-06 | Asociar Collections                                        | OK        |
-| PUB-07 | Eliminar Asset de publicación sin eliminar el Asset global | c       |
-| PUB-08 | Comprobar conservación de relaciones al editar             | PENDIENTE |
-| PUB-09 | Eliminar publicación y comprobar sus relaciones            | PENDIENTE |
+| PUB-07 | Eliminar Asset de publicación sin eliminar el Asset global | OK        |
+| PUB-08 | Comprobar conservación de relaciones al editar             | OK        |
+| PUB-09 | Eliminar publicación y comprobar sus relaciones            | OK        |
 
-## 5. Gallery / Assets
+## 5. Gallery / Assets ✅
 
 | ID     | Prueba                                                 | Estado    |
 | ------ | ------------------------------------------------------ | --------- |
@@ -73,9 +73,9 @@
 | AST-08 | Eliminar colección sin eliminar Assets globales        | OK        |
 | AST-09 | Consultar galería después de las operaciones           | OK        |
 | AST-10 | Modificar Asset Role                                   | OK        |
-| AST-11 | Gestionar textos asociados                             | PARCIAL   |
+| AST-11 | Gestionar textos asociados                             | OK        |
 
-## 6. Collections
+## 6. Collections ✅
 
 | ID     | Prueba                                         | Estado    |
 | ------ | ---------------------------------------------- | --------- |
@@ -83,33 +83,33 @@
 | COL-02 | Asociar Asset                                  | OK        |
 | COL-03 | Eliminar colección asociada a publicación      | OK        |
 | COL-04 | Comprobar que los Assets permanecen en galería | OK        |
-| COL-05 | Editar colección                               | PENDIENTE |
-| COL-06 | Modificar orden de Assets                      | PENDIENTE |
-| COL-07 | Modificar Asset Role desde colección           | PENDIENTE |
-| COL-08 | Comprobar persistencia                         | PENDIENTE |
+| COL-05 | Editar colección                               | OK        |
+| COL-06 | Modificar orden de Assets                      | OK        |
+| COL-07 | Modificar Asset Role desde colección           | OK        |
+| COL-08 | Comprobar persistencia                         | OK        |
 
-## 7. Asset Texts
+## 7. Asset Texts ✅
 
 | ID     | Prueba                            | Estado    |
 | ------ | --------------------------------- | --------- |
 | TXT-01 | Crear texto asociado a Asset      | OK        |
 | TXT-02 | Crear textos con Types diferentes | OK        |
 | TXT-03 | Modificar texto                   | OK        |
-| TXT-04 | Consultar textos asociados        | PENDIENTE |
-| TXT-05 | Eliminar texto                    | PENDIENTE |
-| TXT-06 | Comprobar persistencia            | PENDIENTE |
+| TXT-04 | Consultar textos asociados        | OK        |
+| TXT-05 | Eliminar texto                    | OK        |
+| TXT-06 | Comprobar persistencia            | OK        |
 
-## 8. Clients
+## 8. Clients ✅
 
 | ID     | Prueba                                               | Estado    |
 | ------ | ---------------------------------------------------- | --------- |
 | CLI-01 | Crear Client de prueba                               | OK        |
 | CLI-02 | Gestionar logo                                       | OK        |
 | CLI-03 | Eliminar Client y comprobar borrado físico del logo  | OK        |
-| CLI-04 | Eliminar Client sin archivo                          | PENDIENTE |
-| CLI-05 | Comprobar eliminación cuando el archivo ya no existe | PENDIENTE |
+| CLI-04 | Eliminar Client sin archivo                          | OK        |
+| CLI-05 | Comprobar eliminación cuando el archivo ya no existe | OK        |
 
-## 9. Skills
+## 9. Skills ✅
 
 | ID     | Prueba                                              | Estado     |
 | ------ | --------------------------------------------------- | ---------- |
@@ -119,24 +119,47 @@
 | SKL-04 | Asociar Skills a grupo                              | OK         |
 | SKL-05 | Eliminar grupo y sus asociaciones                   | OK         |
 | SKL-06 | Eliminar Skill y comprobar borrado físico del icono | OK         |
-| SKL-07 | Eliminar Skill sin archivo                          | PENDIENTE  |
-| SKL-08 | Actualización de referencias tras eliminar grupo    | INCIDENCIA |
-
-**Incidencia SKL-08:** después de eliminar un grupo, la galería conserva temporalmente información de asociaciones anteriores. Al refrescar, permite eliminar el Skill. Incidencia documentada para una futura corrección.
+| SKL-07 | Eliminar Skill sin archivo                          | OK         |
+| SKL-08 | Actualización de referencias tras eliminar grupo    | OK         |
 
 ## 10. Integridad y casos negativos
 
-| ID     | Prueba                                  | Estado    |
-| ------ | --------------------------------------- | --------- |
-| NEG-01 | Consultar identificador inexistente     | PENDIENTE |
-| NEG-02 | Editar identificador inexistente        | PENDIENTE |
-| NEG-03 | Eliminar identificador inexistente      | PENDIENTE |
-| NEG-04 | Crear registros sin campos obligatorios | PENDIENTE |
-| NEG-05 | Introducir datos duplicados             | PENDIENTE |
-| NEG-06 | Eliminar entidad referenciada           | PARCIAL   |
-| NEG-07 | Asignar archivo gestionado inexistente  | PENDIENTE |
-| NEG-08 | Asignar ruta multimedia inválida        | PENDIENTE |
-| NEG-09 | Comprobar respuestas de validación      | PENDIENTE |
+**Criterio de validación:** los tests automatizados de servicios y validaciones aportan cobertura parcial, pero no sustituyen la comprobación de los endpoints HTTP. Para marcar una prueba como completada debe ejecutarse mediante Postman y verificarse tanto el código HTTP como la respuesta.
+
+| ID | Prueba | Estado |
+|---|---|---|
+| NEG-01 | Consultar identificador inexistente | PENDIENTE |
+| NEG-02 | Editar identificador inexistente | PARCIAL |
+| NEG-03 | Eliminar identificador inexistente | PARCIAL |
+| NEG-04 | Crear registros sin campos obligatorios | PARCIAL |
+| NEG-05 | Introducir datos duplicados | PARCIAL |
+| NEG-06 | Eliminar entidad referenciada | PARCIAL |
+| NEG-07 | Asignar archivo gestionado inexistente | PARCIAL |
+| NEG-08 | Asignar ruta multimedia inválida | PARCIAL |
+| NEG-09 | Comprobar respuestas de validación | PARCIAL |
+
+### Cobertura automatizada existente
+
+La auditoría de los tests del proyecto identifica la siguiente cobertura:
+
+- **NEG-01:** no se encontraron tests específicos para consultar identificadores inexistentes.
+- **NEG-02:** tests parciales para Client, Skill y Asset.
+- **NEG-03:** tests parciales para Client, Skill, Asset, Collection, Publication, AssetCollection y PublicationAsset.
+- **NEG-04:** cobertura parcial. Se comprueba que Text requiere un formato, pero no la ausencia de todos los campos obligatorios de las distintas entidades.
+- **NEG-05:** tests de duplicados para Client, Skill, PublicationAsset y URL de Asset.
+- **NEG-06:** tests de integridad referencial para Client, Skill, Asset y SkillGroup.
+- **NEG-07:** tests de archivos gestionados inexistentes para Client, Skill y Asset.
+- **NEG-08:** tests parciales de rutas inválidas, traversal, directorios y carpetas incorrectas.
+- **NEG-09:** tests de validación de DTO para Client, Skill y Text.
+
+**Limitación:** los tests existentes comprueban principalmente excepciones y validaciones en servicios o DTOs. No se encontraron pruebas HTTP específicas con Supertest que verifiquen los códigos de respuesta y el contenido devuelto por los endpoints para estos casos.
+
+### Criterio de estados
+
+- **PENDIENTE:** no se ha identificado cobertura automatizada ni se ha realizado la comprobación manual.
+- **PARCIAL:** existe cobertura automatizada, pero no se ha verificado el comportamiento HTTP completo mediante Postman, o la cobertura solo contempla algunas entidades.
+- **OK:** prueba ejecutada mediante Postman, comprobando el código HTTP esperado y el contenido de la respuesta.
+- **INCIDENCIA:** comportamiento incorrecto detectado y documentado.
 
 ## 11. Persistencia y regresión
 

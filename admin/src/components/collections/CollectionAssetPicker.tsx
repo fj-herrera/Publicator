@@ -14,12 +14,19 @@ import './collections.css'
 
 type CollectionAssetPickerProps = {
   assets: Asset[]
+  hasGalleryAssets: boolean
   roles: string[]
   onAdd: (assets: Asset[], role: string) => void
   onClose: () => void
 }
 
-function CollectionAssetPicker({ assets, roles, onAdd, onClose }: CollectionAssetPickerProps) {
+function CollectionAssetPicker({
+  assets,
+  hasGalleryAssets,
+  roles,
+  onAdd,
+  onClose,
+}: CollectionAssetPickerProps) {
   const [query, setQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set())
@@ -85,7 +92,11 @@ function CollectionAssetPicker({ assets, roles, onAdd, onClose }: CollectionAsse
       </header>
 
       {assets.length === 0 ? (
-        <p className="collection-picker-empty">All the assets of the gallery are already in this collection.</p>
+        <p className="collection-picker-empty">
+          {hasGalleryAssets
+            ? 'All the assets of the gallery are already in this collection.'
+            : 'There are no assets in the gallery yet.'}
+        </p>
       ) : visibleAssets.length === 0 ? (
         <p className="collection-picker-empty">No assets found.</p>
       ) : (

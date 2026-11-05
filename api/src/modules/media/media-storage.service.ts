@@ -8,7 +8,7 @@ import { Client } from '../client/entities/client.entity.js'
 import { Skill } from '../skill/entities/skill.entity.js'
 import { mediaDirectory } from './local-media-storage.js'
 
-export type MediaFolder = 'assets' | 'clients' | 'skills/icons'
+export type MediaFolder = 'assets' | 'clients' | 'skills' | 'skills/icons'
 
 export interface StoredFile {
   url: string

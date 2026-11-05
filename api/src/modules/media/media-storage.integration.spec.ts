@@ -146,7 +146,7 @@ describe('media file lifecycle against PostgreSQL', () => {
 
     ds = dataSource
     storage.directory = await mkdtemp(join(tmpdir(), 'publicator-it-media-'))
-    for (const folder of ['assets', 'clients', 'skills/icons']) {
+    for (const folder of ['assets', 'clients', 'skills', 'skills/icons']) {
       await mkdir(join(storage.directory, folder), { recursive: true })
     }
     await ds.query('TRUNCATE client, skill, asset RESTART IDENTITY CASCADE')
@@ -255,7 +255,7 @@ describe('media file lifecycle against PostgreSQL', () => {
   describe('assignment of managed URLs', () => {
     it('rejects a managed file that does not exist without saving anything', async () => {
       await expect(clients.create({ name: 'x', logo: logoUrl('nope.png') })).rejects.toBeInstanceOf(BadRequestException)
-      await expect(skills.create({ name: 'x', icon: '/media/skills/icons/nope.svg' })).rejects.toBeInstanceOf(BadRequestException)
+      await expect(skills.create({ name: 'x', icon: '/media/skills/nope.svg' })).rejects.toBeInstanceOf(BadRequestException)
       await expect(
         assets.create({ type: 'Image', url: '/media/assets/nope.png', name: 'n' }),
       ).rejects.toBeInstanceOf(BadRequestException)
@@ -289,32 +289,32 @@ describe('media file lifecycle against PostgreSQL', () => {
     it('accepts an existing file on create and update for client, skill and asset', async () => {
       await createFile('clients', 'c1.png')
       await createFile('clients', 'c2.png')
-      await createFile('skills/icons', 's1.svg')
+      await createFile('skills', 's1.svg')
       await createFile('assets', 'a1.png')
       await createFile('assets', 'a2.png')
 
       const client = await clients.create({ name: 'c', logo: logoUrl('c1.png') })
       await clients.update(client.id, { logo: logoUrl('c2.png') })
-      const skill = await skills.create({ name: 's', icon: '/media/skills/icons/s1.svg' })
+      const skill = await skills.create({ name: 's', icon: '/media/skills/s1.svg' })
       const asset = await assets.create({ type: 'Image', url: '/media/assets/a1.png', name: 'a' })
       await assets.update(asset.id, { url: '/media/assets/a2.png' })
 
       expect((await ds.getRepository(Client).findOneByOrFail({ id: client.id })).logo).toBe(logoUrl('c2.png'))
-      expect((await ds.getRepository(Skill).findOneByOrFail({ id: skill.id })).icon).toBe('/media/skills/icons/s1.svg')
+      expect((await ds.getRepository(Skill).findOneByOrFail({ id: skill.id })).icon).toBe('/media/skills/s1.svg')
       expect((await ds.getRepository(Asset).findOneByOrFail({ id: asset.id })).url).toBe('/media/assets/a2.png')
     })
 
     it('rejects replacing a logo or icon with a missing file and keeps the old one intact', async () => {
       await createFile('clients', 'old.png')
-      await createFile('skills/icons', 'old.svg')
+      await createFile('skills', 'old.svg')
       const client = await clients.create({ name: 'c', logo: logoUrl('old.png') })
-      const skill = await skills.create({ name: 's', icon: '/media/skills/icons/old.svg' })
+      const skill = await skills.create({ name: 's', icon: '/media/skills/old.svg' })
 
       await expect(clients.update(client.id, { logo: logoUrl('gone.png') })).rejects.toBeInstanceOf(BadRequestException)
-      await expect(skills.update(skill.id, { icon: '/media/skills/icons/gone.svg' })).rejects.toBeInstanceOf(BadRequestException)
+      await expect(skills.update(skill.id, { icon: '/media/skills/gone.svg' })).rejects.toBeInstanceOf(BadRequestException)
 
       expect(await exists('clients', 'old.png')).toBe(true)
-      expect(await exists('skills/icons', 'old.svg')).toBe(true)
+      expect(await exists('skills', 'old.svg')).toBe(true)
       expect((await ds.getRepository(Client).findOneByOrFail({ id: client.id })).logo).toBe(logoUrl('old.png'))
     })
 
@@ -349,10 +349,10 @@ describe('media file lifecycle against PostgreSQL', () => {
   describe('deletion and replacement', () => {
     it('deletes the logo, icon and asset file together with their records', async () => {
       await createFile('clients', 'c.png')
-      await createFile('skills/icons', 's.svg')
+      await createFile('skills', 's.svg')
       await createFile('assets', 'a.png')
       const client = await clients.create({ name: 'c', logo: logoUrl('c.png') })
-      const skill = await skills.create({ name: 's', icon: '/media/skills/icons/s.svg' })
+      const skill = await skills.create({ name: 's', icon: '/media/skills/s.svg' })
       const asset = await assets.create({ type: 'Image', url: '/media/assets/a.png', name: 'a' })
 
       await clients.remove(client.id)
@@ -360,8 +360,20 @@ describe('media file lifecycle against PostgreSQL', () => {
       await assets.remove(asset.id)
 
       expect(await readdir(filePath('clients', ''))).toEqual([])
-      expect(await readdir(filePath('skills/icons', ''))).toEqual([])
+      expect(await exists('skills', 's.svg')).toBe(false)
       expect(await readdir(filePath('assets', ''))).toEqual([])
+    })
+
+    it('cleans up legacy skill icons stored in the old nested directory', async () => {
+      await createFile('skills/icons', 'legacy.svg')
+      const skill = await ds.getRepository(Skill).save({
+        name: 'legacy',
+        icon: '/media/skills/icons/legacy.svg',
+      })
+
+      await skills.remove(skill.id)
+
+      expect(await exists('skills/icons', 'legacy.svg')).toBe(false)
     })
 
     it('deletes records without a file, with an external URL or with a missing file', async () => {
@@ -448,10 +460,10 @@ describe('media file lifecycle against PostgreSQL', () => {
 
     it('turns foreign key violations into 409 and keeps the file for client, skill and asset', async () => {
       await createFile('clients', 'f.png')
-      await createFile('skills/icons', 'f.svg')
+      await createFile('skills', 'f.svg')
       await createFile('assets', 'f.png')
       const client = await clients.create({ name: 'fk-blocked', logo: logoUrl('f.png') })
-      const skill = await skills.create({ name: 'fk-blocked', icon: '/media/skills/icons/f.svg' })
+      const skill = await skills.create({ name: 'fk-blocked', icon: '/media/skills/f.svg' })
       const asset = await assets.create({ type: 'Image', url: '/media/assets/f.png', name: 'fk-blocked' })
 
       await expect(clients.remove(client.id)).rejects.toBeInstanceOf(ConflictException)
@@ -459,7 +471,7 @@ describe('media file lifecycle against PostgreSQL', () => {
       await expect(assets.remove(asset.id)).rejects.toBeInstanceOf(ConflictException)
 
       expect(await exists('clients', 'f.png')).toBe(true)
-      expect(await exists('skills/icons', 'f.svg')).toBe(true)
+      expect(await exists('skills', 'f.svg')).toBe(true)
       expect(await exists('assets', 'f.png')).toBe(true)
     })
 

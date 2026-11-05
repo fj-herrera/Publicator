@@ -467,7 +467,12 @@ function PublicationList() {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Hide columns"
+                  label={(
+                    <span className="publication-column-picker-label">
+                      <VisibilityOffIcon aria-hidden="true" fontSize="inherit" />
+                      Columns
+                    </span>
+                  )}
                   placeholder={hiddenColumns.length === 0 ? 'Select' : ''}
                 />
               )}

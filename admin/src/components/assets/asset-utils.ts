@@ -1,6 +1,24 @@
-import type { Asset } from '../../entities/asset'
+import type {
+  Asset,
+  AssetCollectionRelation,
+  PublicationAssetRelation,
+} from '../../entities/asset'
+import type { AssetText } from '../../entities/asset-text'
 
 const previewableImagePattern = /\.(avif|gif|jpe?g|png|svg|webp)(?:[?#]|$)/i
+
+type AssetRelationGroups = {
+  publications: readonly PublicationAssetRelation[]
+  collections: readonly AssetCollectionRelation[]
+}
+
+export function getAssetAssociationCount(relations: AssetRelationGroups) {
+  return relations.publications.length + relations.collections.length
+}
+
+export function hasAssetAssociations(relations: AssetRelationGroups, assetTexts: AssetText[]) {
+  return getAssetAssociationCount(relations) > 0 || assetTexts.length > 0
+}
 
 export function getFileName(url: string) {
   const path = url.split(/[?#]/, 1)[0]

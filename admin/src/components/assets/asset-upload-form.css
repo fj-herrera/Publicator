@@ -1,7 +1,7 @@
 .asset-upload-panel {
     padding: 18px 16px 16px;
     border-bottom: 1px solid #c8cdd1;
-    background: #fff;
+    background: var(--form-bg);
 }
 
 .asset-upload-form {
@@ -56,46 +56,27 @@
 
 .asset-upload-fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 320px));
+    grid-template-columns: minmax(0, 260px) minmax(260px, 1fr) minmax(0, 260px);
     gap: 24px;
+}
+
+.asset-upload-fields-no-target {
+    grid-template-columns: repeat(2, minmax(0, 260px));
 }
 
 .asset-upload-field {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     min-width: 0;
     color: #626b71;
     font-size: 12px;
 }
 
-.asset-upload-field>label {
+.asset-upload-autocomplete {
     grid-column: 1 / -1;
-}
-
-.asset-upload-field select,
-.asset-upload-field input {
-    box-sizing: border-box;
     width: 100%;
     min-width: 0;
-    min-height: 42px;
-    padding: 8px 10px;
-    border: 1px solid #c8cdd1;
-    border-radius: 3px;
-    color: #272d31;
-    background: #fff;
-    font: inherit;
-    font-size: 13px;
-}
-
-.asset-upload-field input:disabled,
-.asset-upload-field select:disabled {
-    color: #858d92;
-    background: #f3f4f4;
-}
-
-.asset-upload-field input {
-    grid-column: 1 / -1;
 }
 
 .asset-upload-file-list {
@@ -117,6 +98,7 @@
     padding: 4px 8px;
     border: 1px solid #e0e3e5;
     color: #343c41;
+    background: #fff;
     font-size: 13px;
 }
 

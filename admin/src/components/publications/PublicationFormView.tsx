@@ -64,12 +64,10 @@ function PublicationFormView({ publicationId, onClose }: PublicationFormViewProp
         assets: {
           ...resume.values.assets,
           directAssets: data.initialValues.assets.directAssets,
-          collectionIds: returnState?.createdCollectionId
-            ? [...new Set([
-              ...resume.values.assets.collectionIds,
-              returnState.createdCollectionId,
-            ])]
-            : resume.values.assets.collectionIds,
+          collectionIds: [...new Set([
+            ...resume.values.assets.collectionIds,
+            ...(returnState?.createdCollectionId ? [returnState.createdCollectionId] : []),
+          ])].filter((id) => data.catalogs.collections.some((collection) => collection.id === id)),
         },
       },
     }

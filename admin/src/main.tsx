@@ -7,6 +7,22 @@ import App from './App.tsx'
 
 const theme = createTheme({
   components: {
+    MuiMenuItem: {
+      styleOverrides: {
+        root: { fontSize: 13 },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        option: { fontSize: 13 },
+        noOptions: { fontSize: 13 },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: { backgroundColor: '#fff' },
+      },
+    },
     MuiTooltip: {
       defaultProps: {
         enterDelay: 400,

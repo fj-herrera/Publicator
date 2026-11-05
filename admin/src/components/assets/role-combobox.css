@@ -20,6 +20,10 @@
     font-size: 13px;
 }
 
+.asset-role-combobox-empty input {
+    padding-right: 8px;
+}
+
 .asset-role-toggle {
     position: absolute;
     top: 0;

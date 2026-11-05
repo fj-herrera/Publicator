@@ -127,9 +127,9 @@ describe('SkillService', () => {
 
   it('creates a skill with its icon, validating and locking the icon URL first', async () => {
     await expect(
-      service.create({ name: 'TypeScript', icon: '/media/skills/icons/ts.svg' }),
-    ).resolves.toEqual({ name: 'TypeScript', icon: '/media/skills/icons/ts.svg' });
-    expect(mediaStorage.assertAssignable).toHaveBeenCalledWith('/media/skills/icons/ts.svg', 'skills/icons', manager);
+      service.create({ name: 'TypeScript', icon: '/media/skills/ts.svg' }),
+    ).resolves.toEqual({ name: 'TypeScript', icon: '/media/skills/ts.svg' });
+    expect(mediaStorage.assertAssignable).toHaveBeenCalledWith('/media/skills/ts.svg', 'skills', manager);
     expect(mediaStorage.assertAssignable.mock.invocationCallOrder[0]).toBeLessThan(
       manager.save.mock.invocationCallOrder[0],
     );
@@ -170,9 +170,9 @@ describe('SkillService', () => {
   it('removes the previous icon file after commit when the icon is replaced', async () => {
     manager.findOne.mockResolvedValue({ id: 1, name: 'TS', icon: '/media/skills/icons/old.svg' });
 
-    await service.update(1, { icon: '/media/skills/icons/new.svg' });
+    await service.update(1, { icon: '/media/skills/new.svg' });
 
-    expect(mediaStorage.assertAssignable).toHaveBeenCalledWith('/media/skills/icons/new.svg', 'skills/icons', manager);
+    expect(mediaStorage.assertAssignable).toHaveBeenCalledWith('/media/skills/new.svg', 'skills', manager);
     expect(mediaStorage.deleteUnreferencedFiles).toHaveBeenCalledExactlyOnceWith([
       { url: '/media/skills/icons/old.svg', folder: 'skills/icons' },
     ]);
@@ -192,7 +192,7 @@ describe('SkillService', () => {
     manager.findOne.mockResolvedValueOnce({ id: 1, name: 'TS', icon: '/media/skills/icons/same.svg' });
     await service.update(1, { name: 'X', icon: '/media/skills/icons/same.svg' });
     manager.findOne.mockResolvedValueOnce({ id: 2, name: 'TS', icon: null });
-    await service.update(2, { icon: '/media/skills/icons/new.svg' });
+    await service.update(2, { icon: '/media/skills/new.svg' });
 
     expect(mediaStorage.deleteUnreferencedFiles).toHaveBeenNthCalledWith(1, []);
     expect(mediaStorage.deleteUnreferencedFiles).toHaveBeenNthCalledWith(2, []);
@@ -216,13 +216,13 @@ describe('SkillService', () => {
   });
 
   it('deletes a skill and then its icon file after commit', async () => {
-    manager.findOne.mockResolvedValue({ id: 1, name: 'TS', icon: '/media/skills/icons/ts.svg' });
+    manager.findOne.mockResolvedValue({ id: 1, name: 'TS', icon: '/media/skills/ts.svg' });
 
     await expect(service.remove(1)).resolves.toBeUndefined();
     expect(manager.findOne).toHaveBeenCalledWith(Skill, { where: { id: 1 }, ...lockedRead });
     expect(manager.delete).toHaveBeenCalledWith(Skill, 1);
     expect(mediaStorage.deleteUnreferencedFiles).toHaveBeenCalledExactlyOnceWith([
-      { url: '/media/skills/icons/ts.svg', folder: 'skills/icons' },
+      { url: '/media/skills/ts.svg', folder: 'skills' },
     ]);
   });
 
@@ -276,7 +276,7 @@ describe('SkillService', () => {
   it('does not save the skill when the new file is rejected on create', async () => {
     mediaStorage.assertAssignable.mockRejectedValue(new Error('missing file'));
 
-    await expect(service.create({ name: 'X', icon: '/media/skills/icons/gone.png' })).rejects.toThrow('missing file');
+    await expect(service.create({ name: 'X', icon: '/media/skills/gone.png' })).rejects.toThrow('missing file');
     expect(manager.save).not.toHaveBeenCalled();
   });
 
@@ -284,7 +284,7 @@ describe('SkillService', () => {
     manager.findOne.mockResolvedValue({ id: 1, name: 'X', icon: '/media/skills/icons/old.png' });
     mediaStorage.assertAssignable.mockRejectedValue(new Error('missing file'));
 
-    await expect(service.update(1, { icon: '/media/skills/icons/gone.png' })).rejects.toThrow('missing file');
+    await expect(service.update(1, { icon: '/media/skills/gone.png' })).rejects.toThrow('missing file');
     expect(manager.save).not.toHaveBeenCalled();
     expect(mediaStorage.deleteUnreferencedFiles).not.toHaveBeenCalled();
   });

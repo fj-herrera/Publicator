@@ -7,6 +7,9 @@ import { Skill } from './entities/skill.entity.js';
 import { SkillGroupSkill } from '../skill-group-skill/entities/skill-group-skill.entity.js';
 import { MediaStorageService, type StoredFile } from '../media/media-storage.service.js';
 
+function skillIconFolder(url: string): 'skills' | 'skills/icons' {
+  return url.startsWith('/media/skills/icons/') ? 'skills/icons' : 'skills';
+}
 
 @Injectable()
 export class SkillService {
@@ -23,7 +26,7 @@ export class SkillService {
   async create(createSkillDto: CreateSkillDto): Promise<Skill> {
     try {
       return await this.skillRepository.manager.transaction(async (manager) => {
-        await this.mediaStorage.assertAssignable(createSkillDto.icon, 'skills/icons', manager);
+        await this.mediaStorage.assertAssignable(createSkillDto.icon, 'skills', manager);
 
         return manager.save(Skill, manager.create(Skill, createSkillDto));
       });
@@ -94,13 +97,13 @@ export class SkillService {
         Object.assign(skill, updateSkillDto);
 
         if (skill.icon !== previous) {
-          await this.mediaStorage.assertAssignable(skill.icon, 'skills/icons', manager);
+          await this.mediaStorage.assertAssignable(skill.icon, 'skills', manager);
         }
 
         const result = await manager.save(Skill, skill);
 
         if (previous && previous !== result.icon) {
-          filesToDelete.push({ url: previous, folder: 'skills/icons' });
+          filesToDelete.push({ url: previous, folder: skillIconFolder(previous) });
         }
 
         return result;
@@ -155,7 +158,7 @@ export class SkillService {
       }
 
       if (skill.icon) {
-        filesToDelete.push({ url: skill.icon, folder: 'skills/icons' });
+        filesToDelete.push({ url: skill.icon, folder: skillIconFolder(skill.icon) });
       }
     });
 

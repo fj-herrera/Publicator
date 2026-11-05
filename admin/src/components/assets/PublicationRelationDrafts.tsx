@@ -41,7 +41,7 @@ function PublicationRelationDrafts({
             <option value="">Select publication</option>
             {publications.map((publication) => (
               <option key={publication.id} value={publication.id}>
-                {publication.meta.title} / {publication.meta.slug}
+                {publication.meta.title}
               </option>
             ))}
           </select>

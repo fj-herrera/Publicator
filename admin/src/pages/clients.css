@@ -1,21 +1,3 @@
 .client-page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: 48px;
-    margin-bottom: 16px;
-}
-
-.client-page-header h1 {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.2;
-}
-
-@media (max-width: 600px) {
-    .client-page-header {
-        flex-wrap: wrap;
-    }
+    justify-content: flex-end;
 }

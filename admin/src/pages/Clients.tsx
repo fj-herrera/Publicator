@@ -7,6 +7,7 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined'
 import EmptyState from '../components/data-display/EmptyState'
 import ClientList from '../components/clients/ClientList'
 import useClientsView from '../hooks/useClientsView'
+import '../components/navigation/section-tabs.css'
 import './clients.css'
 
 function Clients() {
@@ -36,8 +37,7 @@ function Clients() {
 
   return (
     <>
-      <div className="client-page-header">
-        <h1>Clients</h1>
+      <div className="section-tabs-container client-page-header">
         <Button
           variant="contained"
           startIcon={<AddIcon />}

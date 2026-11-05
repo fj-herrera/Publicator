@@ -171,16 +171,16 @@ export class MediaController {
     return { url: `/media/clients/${file.filename}` }
   }
 
-  @Post('skills/icons')
+  @Post('skills')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: (_request, _file, callback) => {
-        const skillIconDirectory = join(mediaDirectory, 'skills', 'icons')
+        const skillDirectory = join(mediaDirectory, 'skills')
         try {
-          mkdirSync(skillIconDirectory, { recursive: true })
-          callback(null, skillIconDirectory)
+          mkdirSync(skillDirectory, { recursive: true })
+          callback(null, skillDirectory)
         } catch (error) {
-          callback(error as Error, skillIconDirectory)
+          callback(error as Error, skillDirectory)
         }
       },
       filename: (_request, file, callback) => {
@@ -195,6 +195,6 @@ export class MediaController {
       throw new BadRequestException('An SVG icon is required.')
     }
 
-    return { url: `/media/skills/icons/${file.filename}` }
+    return { url: `/media/skills/${file.filename}` }
   }
 }

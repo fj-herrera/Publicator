@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Alert } from '@mui/material'
 import CollectionsIcon from '@mui/icons-material/Collections'
-import DownloadIcon from '@mui/icons-material/Download'
+import FilterListIcon from '@mui/icons-material/FilterList'
 import SearchIcon from '@mui/icons-material/Search'
 import CollectionDeleteDialog from '../components/collections/CollectionDeleteDialog'
 import CollectionEditor from '../components/collections/CollectionEditor'
@@ -14,7 +14,6 @@ import {
 import CollectionForm from '../components/collections/CollectionForm'
 import CollectionList from '../components/collections/CollectionList'
 import EmptyState from '../components/data-display/EmptyState'
-import { downloadCsv } from '../components/data-display/download-csv'
 import { apiMessages } from '../constants/api-messages'
 import type { CollectionAsset, CollectionRow } from '../entities/collection'
 import useCollectionsData from '../hooks/useCollectionsData'
@@ -200,23 +199,6 @@ function Collections({
     }
   }
 
-  const handleDownload = () => {
-    downloadCsv('publicator-collections.csv', [
-      ['id', 'name', 'position', 'publication', 'slug', 'client', 'type', 'contexts', 'assets'],
-      ...visibleRows.map((row) => [
-        String(row.id),
-        row.name,
-        String(row.position),
-        row.publication.meta.title,
-        row.publication.meta.slug,
-        row.publication.meta.client?.name ?? '',
-        row.type,
-        row.contexts.map((context) => context.name).join('; '),
-        String(row.assets.length),
-      ]),
-    ])
-  }
-
   return (
     <section className="collections-view">
       {error && <Alert severity="error">{error}</Alert>}
@@ -247,6 +229,7 @@ function Collections({
           key={editingRow.id}
           isRefreshing={isRefreshing}
           isStale={Boolean(error)}
+          publications={data.publications}
           onClose={() => {
             if (flowCollectionId === editingRow.id) {
               finishPublicationCollectionFlow(editingRow.id)
@@ -280,16 +263,6 @@ function Collections({
           <>
             <div className="collections-toolbar">
               <button
-                aria-label="Download filtered collections as CSV"
-                className="collection-icon-button"
-                disabled={visibleRows.length === 0}
-                onClick={handleDownload}
-                title="Download filtered collections as CSV"
-                type="button"
-              >
-                <DownloadIcon aria-hidden="true" />
-              </button>
-              <button
                 aria-expanded={isFilterOpen}
                 aria-label="Show filters"
                 className="collection-icon-button"
@@ -297,7 +270,7 @@ function Collections({
                 title="Filter collections"
                 type="button"
               >
-                <SearchIcon aria-hidden="true" />
+                <FilterListIcon aria-hidden="true" />
               </button>
             </div>
             {isFilterOpen && (

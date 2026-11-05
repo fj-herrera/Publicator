@@ -6,7 +6,7 @@ export async function uploadSkillIcon(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await fetch('/api/media/skills/icons', {
+  const response = await fetch('/api/media/skills', {
     method: 'POST',
     body: formData,
   })

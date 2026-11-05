@@ -114,7 +114,16 @@
 .collection-list .data-grid .MuiTableCell-root {
     height: auto;
     min-width: 0;
+    border-right: 1px solid #e1e5e6;
     vertical-align: middle;
+}
+
+.collection-list .data-grid .MuiTableCell-root:last-child {
+    border-right: 0;
+}
+
+.collection-list .data-grid .MuiTableCell-head:not(:last-child) {
+    border-right-color: #b6e4cc;
 }
 
 .collection-list .data-grid .collection-image-column {
@@ -160,7 +169,9 @@
 
 .collection-context {
     padding-right: 8px;
+    padding-left: 8px;
     border-right: 1px solid #c8cdd1;
+    border-left: 1px solid #c8cdd1;
 }
 
 .collection-slug.MuiChip-root {
@@ -241,7 +252,7 @@
     gap: 16px;
     padding: 24px;
     border-bottom: 1px solid #e0e0e0;
-    background: #fff;
+    background: var(--form-bg);
 }
 
 .collection-create-row {
@@ -252,8 +263,6 @@
 }
 
 .collection-create-name,
-.collection-create-type,
-.collection-editor-type,
 .collection-editor-name,
 .collection-picker-role {
     display: grid;
@@ -262,9 +271,12 @@
     font-size: 12px;
 }
 
-.collection-create-type .asset-role-combobox,
-.collection-editor-type .asset-role-combobox,
 .collection-picker-role .asset-role-combobox {
+    width: 260px;
+}
+
+.collection-create-type,
+.collection-editor-type {
     width: 260px;
 }
 
@@ -371,16 +383,6 @@
     font-size: 13px;
 }
 
-.collection-picker-header select {
-    padding: 7px 24px 7px 8px;
-    border: 1px solid #c8cdd1;
-    border-radius: 3px;
-    color: #283035;
-    background: #fff;
-    font: inherit;
-    font-size: 13px;
-}
-
 .collection-picker-header select option {
     color: #283035;
     background: #fff;
@@ -472,4 +474,15 @@
     .collection-editor-header .collection-form-actions {
         margin-left: 0;
     }
+}
+.collection-create-form .MuiInputLabel-root,
+.collection-create-form .MuiInputBase-input,
+.collection-create-form .MuiChip-label,
+.collection-editor-header .MuiInputLabel-root,
+.collection-editor-header .MuiInputBase-input,
+.collection-editor-header .MuiChip-label,
+.collection-filters .MuiInputLabel-root,
+.collection-filters .MuiInputBase-input,
+.collection-filters .MuiChip-label {
+    font-size: 13px;
 }

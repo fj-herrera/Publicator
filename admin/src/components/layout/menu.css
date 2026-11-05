@@ -17,3 +17,6 @@
 .menu-drawer.mobile .MuiDrawer-paper {
   width: 200px;
 }
+.menu-drawer .menu-item .MuiListItemText-primary {
+  font-size: 16px;
+}

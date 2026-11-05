@@ -86,4 +86,14 @@ describe('MediaController', () => {
     await expect(controller.uploadAssets([])).rejects.toBeInstanceOf(BadRequestException)
     expect(assetService.create).not.toHaveBeenCalled()
   })
+
+  it('returns a URL under the skills media directory', async () => {
+    expect(
+      controller.uploadSkillIcon({ filename: 'typescript-a1b2c3d4.svg' } as Express.Multer.File),
+    ).toEqual({ url: '/media/skills/typescript-a1b2c3d4.svg' })
+  })
+
+  it('rejects an empty skill icon upload', async () => {
+    expect(() => controller.uploadSkillIcon()).toThrow(BadRequestException)
+  })
 })

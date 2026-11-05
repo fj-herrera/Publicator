@@ -24,6 +24,12 @@ function Publications() {
   const [isTagFormOpen, setIsTagFormOpen] = useState(false)
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
   const handleTabChange = (value: string) => {
+    if (value !== activeTab) {
+      setIsTypeFormOpen(false)
+      setIsTagFormOpen(false)
+      setIsContextFormOpen(false)
+      if (isCreating) navigate('/publications')
+    }
     setActiveTab(value)
     setVisitedTabs((previousTabs) => new Set(previousTabs).add(value))
   }

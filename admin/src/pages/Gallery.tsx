@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
 import CollectionsIcon from '@mui/icons-material/Collections'
 import DeleteIcon from '@mui/icons-material/Delete'
-import DownloadIcon from '@mui/icons-material/Download'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import EventIcon from '@mui/icons-material/Event'
+import FolderIcon from '@mui/icons-material/Folder'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag'
+import ViewInArOutlinedIcon from '@mui/icons-material/ViewInArOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import AssetDeleteDialog from '../components/assets/AssetDeleteDialog'
 import EmptyState from '../components/data-display/EmptyState'
@@ -17,10 +21,12 @@ import { useLocation, useNavigate } from 'react-router'
 import AssetTextsEditor from '../components/assets/AssetTextsEditor'
 import AssetUploadForm from '../components/assets/AssetUploadForm'
 import {
+  getAssetAssociationCount as countAssetRelations,
   formatFileSize,
   getAssetName,
   getFileFormat,
   getPreviewUrl,
+  hasAssetAssociations as assetHasAssociations,
   isPreviewableImage,
 } from '../components/assets/asset-utils'
 import Collections from '../views/Collections'
@@ -45,18 +51,16 @@ import { invalidate, type ResourceName } from '../state/resource-invalidation'
 import useGalleryData from '../hooks/useGalleryData'
 import './gallery.css'
 
-function formatUploadDate(value?: string | null) {
-  if (!value) {
+function formatUploadDate(value: string | null | undefined, style: 'date' | 'time') {
+  const date = value ? new Date(value) : null
+
+  if (!date || Number.isNaN(date.getTime())) {
     return 'Not available'
   }
 
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? 'Not available'
-    : new Intl.DateTimeFormat('es-ES', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(date)
+  return new Intl.DateTimeFormat('es-ES', style === 'date'
+    ? { dateStyle: 'short' }
+    : { timeStyle: 'short' }).format(date)
 }
 
 function getRelationLabel(relation: PublicationAssetRelation | AssetCollectionRelation) {
@@ -69,10 +73,6 @@ function getRelationLabel(relation: PublicationAssetRelation | AssetCollectionRe
   return relation.collection.name
     ? `${relation.collection.name} (${relation.collection.type ?? 'Collection'}, #${relation.collection.id})`
     : `Collection #${relation.collection.id}`
-}
-
-function escapeCsv(value: string) {
-  return `"${value.replace(/"/g, '""')}"`
 }
 
 function toTextDraft(assetText: AssetText, key: number): AssetTextDraft {
@@ -198,17 +198,20 @@ function Gallery() {
 
     return matchesQuery && (selectedType === 'all' || asset.type === selectedType)
   })
-  const getAssetAssociationCount = (asset: Asset) => {
-    const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
-    return assetRelations.publications.length
-      + assetRelations.collections.length
-      + (assetTexts[asset.id]?.length ?? 0)
-  }
+  const getAssetRelations = (asset: Asset) => (
+    relations[asset.id] ?? { publications: [], collections: [] }
+  )
+  const getAssetAssociationCount = (asset: Asset) => (
+    countAssetRelations(getAssetRelations(asset))
+  )
+  const hasAssetAssociations = (asset: Asset) => (
+    assetHasAssociations(getAssetRelations(asset), assetTexts[asset.id] ?? [])
+  )
   const deletableVisibleAssets = visibleAssets.filter(
-    (asset) => getAssetAssociationCount(asset) === 0,
+    (asset) => !hasAssetAssociations(asset),
   )
   const selectedDeletableAssets = assets.filter(
-    (asset) => selectedAssetIds.has(asset.id) && getAssetAssociationCount(asset) === 0,
+    (asset) => selectedAssetIds.has(asset.id) && !hasAssetAssociations(asset),
   )
   const allVisibleDeletableAssetsSelected = deletableVisibleAssets.length > 0
     && deletableVisibleAssets.every((asset) => selectedAssetIds.has(asset.id))
@@ -471,36 +474,17 @@ function Gallery() {
     })
   }
 
-  const downloadFilteredAssets = () => {
-    const rows = [
-      ['id', 'file name', 'type', 'url', 'publication ids', 'collection ids'],
-      ...visibleAssets.map((asset) => {
-        const assetRelations = relations[asset.id] ?? { publications: [], collections: [] }
-        return [
-          String(asset.id),
-          getAssetName(asset),
-          asset.type,
-          asset.url,
-          assetRelations.publications.map(({ publication }) => publication.id).join('; '),
-          assetRelations.collections.map(({ collection }) => collection.id).join('; '),
-        ]
-      }),
-    ]
-    const csv = rows.map((row) => row.map(escapeCsv).join(',')).join('\n')
-    const fileUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-    const link = document.createElement('a')
-    link.href = fileUrl
-    link.download = 'publicator-assets.csv'
-    link.click()
-    URL.revokeObjectURL(fileUrl)
-  }
-
   return (
     <main className="gallery-page">
+      {!(isAssetsTab && selectedAsset) && (
       <header className="gallery-header">
         <SectionTabs
           value={activeGalleryTab}
-          onChange={setActiveGalleryTab}
+          onChange={(value) => {
+            setIsCreateAssetOpen(false)
+            setIsCreateCollectionOpen(false)
+            setActiveGalleryTab(value)
+          }}
           items={[
             { label: 'Collections', value: 'collections', icon: <CollectionsIcon /> },
             { label: 'Assets', value: 'assets', icon: <ImageOutlinedIcon /> },
@@ -592,19 +576,10 @@ function Gallery() {
               {assetTypes.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
           </label>
-          <button
-            aria-label="Download filtered assets as CSV"
-            className="gallery-icon-button"
-            disabled={visibleAssets.length === 0}
-            onClick={downloadFilteredAssets}
-            title="Download filtered inventory as CSV"
-            type="button"
-          >
-            <DownloadIcon aria-hidden="true" />
-          </button>
         </div>
         )}
       </header>
+      )}
 
       {activeGalleryTab === 'collections' && (
         <Collections
@@ -664,30 +639,52 @@ function Gallery() {
                   />
                 ) : <InsertDriveFileOutlinedIcon aria-hidden="true" />}
             </div>
-            <dl className="asset-detail-facts">
-              <div>
-                <dt>File name</dt>
-                <dd>{isEditingAsset ? (
+            <div className="asset-detail-info">
+              <div className="asset-detail-name">
+                <label htmlFor="asset-detail-file-name">File name</label>
+                {isEditingAsset ? (
                   <input
-                    aria-label="File name"
                     autoComplete="off"
+                    id="asset-detail-file-name"
                     maxLength={255}
                     onChange={(event) => setEditedAssetName(event.target.value)}
                     required
                     value={editedAssetName}
                   />
-                ) : getAssetName(selectedAsset)}</dd>
+                ) : <span id="asset-detail-file-name">{getAssetName(selectedAsset)}</span>}
               </div>
-              <div><dt>URL</dt><dd><a href={getPreviewUrl(selectedAsset.url)} rel="noreferrer" target="_blank">{selectedAsset.url}</a></dd></div>
-              <div><dt>MIME type</dt><dd>{selectedAsset.mimeType || 'Not available'}</dd></div>
-              <div><dt>Dimensions</dt><dd>{selectedAsset.dimensions
-                ? `${selectedAsset.dimensions.width} × ${selectedAsset.dimensions.height}`
-                : 'Not available'}</dd></div>
-              <div><dt>File size</dt><dd>{selectedAsset.sizeBytes !== undefined && selectedAsset.sizeBytes !== null
-                ? formatFileSize(selectedAsset.sizeBytes)
-                : 'Not available'}</dd></div>
-              <div><dt>Date</dt><dd>{formatUploadDate(selectedAsset.uploadedAt)}</dd></div>
-            </dl>
+              <a
+                className="asset-detail-link"
+                href={getPreviewUrl(selectedAsset.url)}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <FolderIcon aria-hidden="true" />
+                <span>{selectedAsset.url}</span>
+              </a>
+              <ul className="asset-detail-meta">
+                <li title="Dimensions">
+                  <ViewInArOutlinedIcon aria-hidden="true" />
+                  {selectedAsset.dimensions
+                    ? `${selectedAsset.dimensions.width} x ${selectedAsset.dimensions.height}`
+                    : 'Not available'}
+                </li>
+                <li title="File size">
+                  <ShoppingBagIcon aria-hidden="true" />
+                  {selectedAsset.sizeBytes !== undefined && selectedAsset.sizeBytes !== null
+                    ? formatFileSize(selectedAsset.sizeBytes)
+                    : 'Not available'}
+                </li>
+                <li title="Date">
+                  <EventIcon aria-hidden="true" />
+                  {formatUploadDate(selectedAsset.uploadedAt, 'date')}
+                </li>
+                <li title="Time">
+                  <AccessTimeIcon aria-hidden="true" />
+                  {formatUploadDate(selectedAsset.uploadedAt, 'time')}
+                </li>
+              </ul>
+            </div>
             <section className="asset-detail-relations">
               <h3>Publication relations</h3>
               {relations[selectedAsset.id]?.publications.length ? (
@@ -812,7 +809,7 @@ function Gallery() {
                     aria-label={`Select ${getAssetName(asset)}`}
                     checked={selectedAssetIds.has(asset.id)}
                     className="asset-card-select"
-                    disabled={associationCount > 0}
+                    disabled={hasAssetAssociations(asset)}
                     onChange={(event) => {
                       setSelectedAssetIds((currentIds) => {
                         const nextIds = new Set(currentIds)
@@ -824,7 +821,7 @@ function Gallery() {
                         return nextIds
                       })
                     }}
-                    title={associationCount > 0
+                    title={hasAssetAssociations(asset)
                       ? 'Remove associations before deleting this asset.'
                       : undefined}
                     type="checkbox"
@@ -887,14 +884,14 @@ function Gallery() {
                         <VisibilityOutlinedIcon aria-hidden="true" /> View
                       </button>
                       <button
-                        disabled={associationCount > 0}
+                        disabled={hasAssetAssociations(asset)}
                         onClick={() => {
                           setDeleteAssetError('')
                           setPendingDeleteAssets([asset])
                           setActionAsset(null)
                         }}
                         role="menuitem"
-                        title={associationCount > 0
+                        title={hasAssetAssociations(asset)
                           ? 'Remove associations before deleting this asset.'
                           : undefined}
                         type="button"

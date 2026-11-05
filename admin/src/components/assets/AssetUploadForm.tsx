@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
+import { Autocomplete, TextField } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
-import RoleCombobox from './RoleCombobox'
 import {
   createAssetCollection,
   createPublicationAsset,
@@ -18,6 +18,17 @@ import './asset-upload-form.css'
 const targetsLoadFailed = 'Could not load association options.'
 
 type AssociationKind = 'none' | 'publication' | 'collection'
+
+const associationKindOptions: { value: AssociationKind; label: string }[] = [
+  { value: 'none', label: 'No association' },
+  { value: 'publication', label: 'Publication' },
+  { value: 'collection', label: 'Collection' },
+]
+
+type AssociationTarget = {
+  id: number
+  label: string
+}
 
 interface AssetUploadFormProps {
   publicationRoles: string[]
@@ -71,6 +82,18 @@ function AssetUploadForm({
   const roleOptions = associationKind === 'publication'
     ? publicationRoles
     : collectionRoles
+  const associationTargets: AssociationTarget[] = associationKind === 'publication'
+    ? publications.map((publication) => ({
+      id: publication.id,
+      label: publication.meta.title,
+    }))
+    : collections.map((collection) => ({
+      id: collection.id,
+      label: `${collection.name} (${collection.type})`,
+    }))
+  const selectedAssociationTarget = associationTargets.find(
+    (target) => String(target.id) === associationId,
+  ) ?? null
 
   const addFiles = (selectedFiles: File[]) => {
     const acceptedFiles = validateFiles(selectedFiles)
@@ -175,55 +198,70 @@ function AssetUploadForm({
           <span className="asset-upload-hint">SVG, PNG, JPG, WebP, GIF, MP3, WAV, OGG, MP4, WebM, or PDF (max. 100 MB per file)</span>
         </label>
 
-        <div className="asset-upload-fields">
+        <div className={`asset-upload-fields${associationKind === 'none' ? ' asset-upload-fields-no-target' : ''}`}>
           <div className="asset-upload-field">
-            <label htmlFor="asset-association-kind">Association</label>
-            <select
+            <Autocomplete
+              className="asset-upload-autocomplete"
               id="asset-association-kind"
-              onChange={(event) => {
-                setAssociationKind(event.target.value as AssociationKind)
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, selected) => option.value === selected.value}
+              onChange={(_event, selected) => {
+                setAssociationKind(selected?.value ?? 'none')
                 setAssociationId('')
                 setRole('')
               }}
-              value={associationKind}
-            >
-              <option value="none">No association</option>
-              <option value="publication">Publication</option>
-              <option value="collection">Collection</option>
-            </select>
-            {associationKind !== 'none' && (
-              <select
-                id="asset-association-target"
-                aria-label={`Select ${associationKind}`}
-                disabled={isLoadingTargets}
-                onChange={(event) => setAssociationId(event.target.value)}
-                value={associationId}
-              >
-                <option value="">Select</option>
-                {associationKind === 'publication'
-                  ? publications.map((publication) => (
-                    <option key={publication.id} value={publication.id}>
-                      {publication.meta.title} ({publication.meta.slug})
-                    </option>
-                  ))
-                  : collections.map((collection) => (
-                    <option key={collection.id} value={collection.id}>
-                      {collection.name} ({collection.type}, #{collection.id})
-                    </option>
-                  ))}
-              </select>
-            )}
+              options={associationKindOptions}
+              renderInput={(params) => <TextField {...params} label="Association" />}
+              value={associationKindOptions.find((option) => option.value === associationKind) ?? null}
+            />
           </div>
 
+          {associationKind !== 'none' && (
+            <div className="asset-upload-field asset-upload-target-field">
+              <Autocomplete
+                className="asset-upload-autocomplete"
+                disabled={isLoadingTargets}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, selected) => option.id === selected.id}
+                onChange={(_event, selected) => setAssociationId(selected ? String(selected.id) : '')}
+                options={associationTargets}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={associationKind === 'publication' ? 'Publication' : 'Collection'}
+                    required
+                  />
+                )}
+                value={selectedAssociationTarget}
+              />
+            </div>
+          )}
+
           <div className="asset-upload-field">
-            <label htmlFor="asset-association-role">Type</label>
-            <RoleCombobox
-              id="asset-association-role"
-              label="Type"
-              options={roleOptions}
-              onChange={setRole}
+            <Autocomplete
+              className="asset-upload-autocomplete"
               disabled={associationKind === 'none'}
-              value={role}
+              forcePopupIcon={roleOptions.length > 0}
+              freeSolo
+              inputValue={role}
+              noOptionsText="Create new type"
+              open={roleOptions.length > 0 ? undefined : false}
+              onInputChange={(_event, nextValue) => setRole(nextValue)}
+              options={roleOptions}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Type"
+                  placeholder={associationKind !== 'none' && roleOptions.length === 0
+                    ? 'Create new type'
+                    : undefined}
+                  required={associationKind !== 'none'}
+                  slotProps={{
+                    ...params.slotProps,
+                    htmlInput: { ...params.slotProps.htmlInput, maxLength: 50 },
+                  }}
+                />
+              )}
             />
           </div>
         </div>

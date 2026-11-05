@@ -30,8 +30,10 @@ describe('MediaStorageService', () => {
   beforeEach(async () => {
     storage.directory = await mkdtemp(join(tmpdir(), 'publicator-media-'))
     await mkdir(join(storage.directory, 'clients'), { recursive: true })
+    await mkdir(join(storage.directory, 'skills'), { recursive: true })
     await mkdir(join(storage.directory, 'skills', 'icons'), { recursive: true })
     await writeFile(join(storage.directory, 'clients', 'logo.png'), 'logo')
+    await writeFile(join(storage.directory, 'skills', 'skill.svg'), 'skill')
     await writeFile(join(storage.directory, 'skills', 'icons', 'icon.svg'), 'icon')
 
     references = { clients: 0, skills: 0, assets: 0 }
@@ -76,6 +78,9 @@ describe('MediaStorageService', () => {
     })
 
     it('resolves stored files inside their media folder', () => {
+      expect(service.resolveFilePath('/media/skills/skill.svg', 'skills')).toBe(
+        join(storage.directory, 'skills', 'skill.svg'),
+      )
       expect(service.resolveFilePath('/media/skills/icons/icon.svg', 'skills/icons')).toBe(
         join(storage.directory, 'skills', 'icons', 'icon.svg'),
       )
@@ -89,7 +94,7 @@ describe('MediaStorageService', () => {
   })
 
   describe('assertAssignable', () => {
-    const assign = (url: string | null | undefined, folder: 'clients' | 'skills/icons' = 'clients') =>
+    const assign = (url: string | null | undefined, folder: 'clients' | 'skills' | 'skills/icons' = 'clients') =>
       service.assertAssignable(url, folder, manager as unknown as EntityManager)
 
     it('locks the URL and accepts an existing file', async () => {

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Alert, Button, Chip, IconButton, TextField, Tooltip } from '@mui/material'
+import { Alert, Autocomplete, Button, Chip, IconButton, TextField, Tooltip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
@@ -11,7 +11,7 @@ import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
 import UndoIcon from '@mui/icons-material/Undo'
 import { apiMessages } from '../../constants/api-messages'
-import type { Asset } from '../../entities/asset'
+import type { Asset, PublicationAssetTarget } from '../../entities/asset'
 import type {
   CollectionAsset,
   CollectionAssetDraft,
@@ -29,15 +29,16 @@ import {
   isPreviewableImage,
 } from '../assets/asset-utils'
 import { invalidate, type ResourceName } from '../../state/resource-invalidation'
+import CollectionTypeField from './CollectionTypeField'
 import RoleCombobox from '../assets/RoleCombobox'
 import DataGrid, { type DataGridColumn } from '../data-display/DataGrid'
 import CollectionAssetPicker from './CollectionAssetPicker'
-import { formatCollectionDate } from './collection-format'
 import './collections.css'
 
 type CollectionEditorProps = {
   collection: CollectionRow
   inventory: Asset[]
+  publications: PublicationAssetTarget[]
   roles: string[]
   typeOptions: string[]
   // The collection comes from shared data that is reloading after a write.
@@ -70,6 +71,7 @@ function toDrafts(items: CollectionAsset[]): CollectionAssetDraft[] {
 function CollectionEditor({
   collection,
   inventory,
+  publications,
   roles,
   typeOptions,
   isRefreshing,
@@ -80,6 +82,9 @@ function CollectionEditor({
   const nextKey = useRef(collection.assets.length)
   const [name, setName] = useState(collection.name)
   const [type, setType] = useState(collection.type)
+  const [publication, setPublication] = useState(
+    () => publications.find((item) => item.id === collection.publication.id) ?? null,
+  )
   const [drafts, setDrafts] = useState(() => toDrafts(collection.assets))
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -145,6 +150,11 @@ function CollectionEditor({
       return
     }
 
+    if (!publication) {
+      setError('Select the publication of the collection.')
+      return
+    }
+
     if (activeDrafts.some((draft) => !draft.role.trim() || draft.role.trim().length > 50)) {
       setError('Every asset needs a role of 1 to 50 characters.')
       return
@@ -155,8 +165,15 @@ function CollectionEditor({
     const written = new Set<ResourceName>()
 
     try {
-      if (trimmedName !== collection.name || trimmedType !== collection.type) {
-        await updateCollectionRequest(collection.id, trimmedName, trimmedType)
+      const changes: { name?: string; type?: string; publicationId?: number } = {}
+      if (trimmedName !== collection.name) changes.name = trimmedName
+      if (trimmedType !== collection.type) changes.type = trimmedType
+      if (publication.id !== collection.publication.id) {
+        changes.publicationId = publication.id
+      }
+
+      if (Object.keys(changes).length > 0) {
+        await updateCollectionRequest(collection.id, changes)
         written.add('collections')
       }
 
@@ -327,21 +344,20 @@ function CollectionEditor({
             value={name}
           />
         </div>
-        <div className="collection-editor-type">
-          <label htmlFor="collection-editor-type-input">Collection type</label>
-          <RoleCombobox
-            createLabel="Create new type"
-            id="collection-editor-type-input"
-            label="Collection type"
-            onChange={setType}
-            options={typeOptions}
-            value={type}
-          />
-        </div>
-        <Chip
+        <CollectionTypeField
+          className="collection-editor-type"
+          onChange={setType}
+          options={typeOptions}
+          value={type}
+        />
+        <Autocomplete
           className="collection-editor-publication"
-          label={`${collection.publication.meta.title} · ${formatCollectionDate(collection.publication.meta.date)}`}
-          size="small"
+          getOptionLabel={(option) => option.meta.title}
+          isOptionEqualToValue={(option, selected) => option.id === selected.id}
+          onChange={(_event, selected) => setPublication(selected)}
+          options={publications}
+          renderInput={(params) => <TextField {...params} label="Publication" required />}
+          value={publication}
         />
         <div className="collection-form-actions">
           <Button
@@ -379,6 +395,7 @@ function CollectionEditor({
       {isPickerOpen && (
         <CollectionAssetPicker
           assets={availableAssets}
+          hasGalleryAssets={inventory.length > 0}
           onAdd={addAssets}
           onClose={() => setIsPickerOpen(false)}
           roles={roles}

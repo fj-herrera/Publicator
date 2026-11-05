@@ -5,7 +5,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import type { PublicationAssetTarget } from '../../entities/asset'
 import { getErrorMessage } from '../../services/api-error'
 import { apiMessages } from '../../constants/api-messages'
-import RoleCombobox from '../assets/RoleCombobox'
+import CollectionTypeField from './CollectionTypeField'
 import './collections.css'
 
 type CollectionFormProps = {
@@ -68,7 +68,7 @@ function CollectionForm({
     <form className="collection-create-form" onSubmit={handleSubmit}>
       <Autocomplete
         className="collection-create-publication"
-        getOptionLabel={(option) => `${option.meta.title} (${option.meta.slug})`}
+        getOptionLabel={(option) => option.meta.title}
         isOptionEqualToValue={(option, selected) => option.id === selected.id}
         onChange={(_event, selected) => setPublication(selected)}
         options={publications}
@@ -85,17 +85,12 @@ function CollectionForm({
             value={name}
           />
         </div>
-        <div className="collection-create-type">
-          <label htmlFor="collection-create-type-input">Collection type *</label>
-          <RoleCombobox
-            createLabel="Create new type"
-            id="collection-create-type-input"
-            label="Collection type"
-            onChange={setType}
-            options={typeOptions}
-            value={type}
-          />
-        </div>
+        <CollectionTypeField
+          className="collection-create-type"
+          onChange={setType}
+          options={typeOptions}
+          value={type}
+        />
         <div className="collection-form-actions">
           <Button
             disabled={isSaving}

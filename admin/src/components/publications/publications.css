@@ -22,7 +22,19 @@
 }
 
 .publication-column-picker {
-    width: min(100%, 240px);
+    width: min(100%, 160px);
+}
+
+.publication-column-picker .MuiInputLabel-root,
+.publication-column-picker .MuiAutocomplete-input,
+.publication-column-picker .MuiChip-label {
+    font-size: 13px;
+}
+
+.publication-column-picker-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .publication-list-filters {

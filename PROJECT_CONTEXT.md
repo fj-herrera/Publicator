@@ -97,7 +97,7 @@ Controladores principales en `api/src/modules/<recurso>/<recurso>.controller.ts`
 - `PATCH /asset-collections/order`: reordena la lista completa de asociaciones de una colección.
 - `POST /media/assets`: multipart `files`, hasta 50 archivos y 100 MB por archivo; admite SVG, JPG/JPEG, PNG, WebP, GIF, MP4, WebM, MP3, WAV, OGG y PDF. Crea un `Asset` por archivo; para imágenes intenta leer dimensiones con Sharp.
 - `POST /media/clients/logos`: un archivo de imagen, máximo 5 MB.
-- `POST /media/skills/icons`: SVG, máximo 5 MB.
+- `POST /media/skills`: SVG, máximo 5 MB; guarda los archivos en `media/skills`.
 
 La carga de assets compensa errores eliminando los registros y archivos creados durante esa petición. Las cargas de logos/icons devuelven una URL y no realizan el ciclo completo de persistencia/limpieza del registro relacionado.
 

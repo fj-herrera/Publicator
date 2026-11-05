@@ -31,11 +31,14 @@ export function createCollectionRequest(publicationId: number, name: string, typ
   )
 }
 
-export function updateCollectionRequest(id: number, name: string, type: string) {
+export function updateCollectionRequest(
+  id: number,
+  changes: { name?: string; type?: string; publicationId?: number },
+) {
   return requestJson<{ id: number }>(
     `/api/collections/${id}`,
     apiMessages.collections.updateFailed,
-    jsonRequest('PATCH', { name, type }),
+    jsonRequest('PATCH', changes),
   )
 }
 

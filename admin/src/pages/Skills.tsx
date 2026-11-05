@@ -49,7 +49,11 @@ function Skills() {
     <>
       <SectionTabs
         value={activeTab}
-        onChange={setActiveTab}
+        onChange={(value) => {
+          setIsSkillGroupFormOpen(false)
+          setIsSkillFormOpen(false)
+          setActiveTab(value)
+        }}
         items={[
           { label: 'Skill Groups', value: 'skill-groups', icon: <BubbleChartIcon /> },
           { label: 'Skills', value: 'skills', icon: <AddIcon /> },

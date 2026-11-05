@@ -276,20 +276,12 @@
 }
 
 .collection-create-name,
-.collection-create-type,
-.collection-editor-name,
-.collection-editor-type {
+.collection-editor-name {
     display: grid;
     gap: 5px;
     width: min(320px, 100%);
     color: #626b71;
     font-size: 12px;
-}
-
-.collection-create-type .asset-role-combobox,
-.collection-editor-type .asset-role-combobox {
-    flex: none;
-    width: 100%;
 }
 
 .collection-main-line .collection-name {
@@ -329,8 +321,8 @@
     border-bottom: 1px solid #d5d9dc;
 }
 
-.collection-editor-publication.MuiChip-root {
-    margin-bottom: 3px;
+.collection-editor-publication {
+    width: min(100%, 620px);
 }
 
 .collection-editor-header .collection-form-actions {
@@ -423,17 +415,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.collection-picker-header select {
-    min-height: 38px;
-    padding: 6px 28px 6px 9px;
-    border: 1px solid #c8cdd1;
-    border-radius: 3px;
-    color: #283035;
-    background: #fff;
-    font: inherit;
-    font-size: 13px;
 }
 
 .collection-picker-search {

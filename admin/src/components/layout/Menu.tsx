@@ -5,18 +5,24 @@ import {
   List,
   ListItem,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
 } from '@mui/material'
+import PushPinIcon from '@mui/icons-material/PushPin'
+import ImageIcon from '@mui/icons-material/Image'
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter'
+import BubbleChartIcon from '@mui/icons-material/BubbleChart'
+import SettingsIcon from '@mui/icons-material/Settings'
 import { NavLink } from 'react-router'
 import './menu.css'
 
 // Menu items for the navigation drawer
 const menuItems = [
-  { label: 'Publications', path: '/publications' },
-  { label: 'Gallery', path: '/gallery' },
-  { label: 'Clients', path: '/clients' },
-  { label: 'Skills', path: '/skills' },
-  { label: 'Settings', path: '/settings', disabled: true },
+  { label: 'Publications', icon: <PushPinIcon />, path: '/publications' },
+  { label: 'Assets', icon: <ImageIcon />, path: '/gallery' },
+  { label: 'Clients', icon: <BusinessCenterIcon />, path: '/clients' },
+  { label: 'Skills', icon: <BubbleChartIcon />, path: '/skills' },
+  { label: 'Settings', icon: <SettingsIcon />, path: '/settings', disabled: true },
 ]
 
 // Menu component
@@ -46,6 +52,7 @@ function Menu({
               onClick={mobile ? onClose : undefined}
               className="menu-item"
             >
+              <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.label} />
             </ListItemButton>
           </ListItem>

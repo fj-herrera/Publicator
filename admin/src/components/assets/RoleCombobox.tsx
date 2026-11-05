@@ -32,9 +32,12 @@ function RoleCombobox({
   const filteredOptions = isFiltering
     ? options.filter((option) => option.toLowerCase().includes(normalizedValue))
     : options
-  const canCreateRole = isFiltering && Boolean(value.trim()) && !options.some((option) => (
-    option.toLowerCase() === normalizedValue
-  ))
+  const canCreateRole = options.length > 0
+    && isFiltering
+    && Boolean(value.trim())
+    && !options.some((option) => (
+      option.toLowerCase() === normalizedValue
+    ))
   const visibleOptions = [
     ...filteredOptions.map((option) => ({ value: option, label: option })),
     ...(canCreateRole ? [{ value: value.trim(), label: `${createLabel}: ${value.trim()}` }] : []),
@@ -79,7 +82,7 @@ function RoleCombobox({
 
   return (
     <div
-      className="asset-role-combobox"
+      className={`asset-role-combobox${options.length === 0 ? ' asset-role-combobox-empty' : ''}`}
       ref={setAnchorEl}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -99,33 +102,36 @@ function RoleCombobox({
         disabled={disabled}
         id={id}
         maxLength={50}
+        placeholder={!disabled && options.length === 0 ? createLabel : undefined}
         onChange={(event) => {
           onChange(event.target.value)
           setActiveIndex(-1)
           setIsFiltering(true)
-          setIsOpen(true)
+          setIsOpen(options.length > 0)
         }}
         onFocus={() => {
           setIsFiltering(false)
-          setIsOpen(true)
+          setIsOpen(options.length > 0)
         }}
         onKeyDown={handleKeyDown}
         role="combobox"
         value={value}
       />
-      <button
-        aria-label={isOpen ? 'Hide role options' : 'Show role options'}
-        className="asset-role-toggle"
-        disabled={disabled}
-        onClick={() => {
-          setIsFiltering(false)
-          setIsOpen((open) => !open)
-        }}
-        onMouseDown={(event) => event.preventDefault()}
-        type="button"
-      >
-        <ArrowDropDownIcon aria-hidden="true" />
-      </button>
+      {options.length > 0 && (
+        <button
+          aria-label={isOpen ? 'Hide role options' : 'Show role options'}
+          className="asset-role-toggle"
+          disabled={disabled}
+          onClick={() => {
+            setIsFiltering(false)
+            setIsOpen((open) => !open)
+          }}
+          onMouseDown={(event) => event.preventDefault()}
+          type="button"
+        >
+          <ArrowDropDownIcon aria-hidden="true" />
+        </button>
+      )}
       {isOpen && !disabled && visibleOptions.length > 0 && (
         portalOptions ? (
           <Popper

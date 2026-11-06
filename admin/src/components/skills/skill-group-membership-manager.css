@@ -1,7 +1,7 @@
 .skill-membership-manager {
     padding: 20px 24px 24px;
     border-bottom: 1px solid #e0e0e0;
-    background-color: #fff;
+    background-color: var(--form-bg);
 }
 
 .skill-membership-transfer {
@@ -131,6 +131,7 @@
     height: 60px;
     border: 1px solid #dedede;
     border-radius: 8px;
+    background-color: #fff;
     color: #bdbdbd;
 }
 

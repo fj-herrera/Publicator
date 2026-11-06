@@ -19,7 +19,7 @@
     grid-template-columns: 36px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
-    max-width: 720px;
+    max-width: 180px;
     padding: 0 16px 4px;
     color: #69747a;
     font-size: 12px;
@@ -46,7 +46,7 @@
 }
 
 .publication-form-section .MuiAccordionSummary-content {
-    align-items: baseline;
+    align-items: center;
     gap: 16px;
 }
 
@@ -76,13 +76,54 @@
 }
 
 .publication-assets-summary {
-    margin-left: auto;
+    margin-left: 0;
     font-size: 12px;
 }
 
-.publication-assets-summary span+span {
-    padding-left: 10px;
+.publication-main-info-summary {
+    flex: 1;
+    justify-content: flex-start;
+    gap: 20px;
+}
+
+.publication-main-info-title {
+    overflow: hidden;
+    color: #8a9399;
+    text-overflow: ellipsis;
+}
+
+.publication-main-info-metadata {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+    color: #4f595f;
+    font-size: 11px;
+}
+
+.publication-main-info-metadata > span {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 3px;
+}
+
+.publication-main-info-metadata > span + span,
+.publication-main-info-tag-count.MuiChip-root {
+    padding-left: 6px;
     border-left: 1px solid #d5d9dc;
+    border-radius: 0;
+}
+
+.publication-main-info-metadata svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+
+.publication-main-info-tag-count.MuiChip-root {
+    height: 26px;
+    background: #f0f1f2;
 }
 
 .publication-main-info-form {
@@ -103,6 +144,21 @@
 
 .publication-field-full {
     grid-column: 1 / -1;
+}
+
+.publication-autocomplete-option {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.publication-autocomplete-option-description {
+    overflow: hidden;
+    color: #727b80;
+    font-size: 12px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .publication-form-section-actions {
@@ -128,8 +184,11 @@
 
 .publication-assets {
     display: flex;
+    width: 100%;
+    max-width: 880px;
     flex-direction: column;
     gap: 24px;
+    margin: 0 auto;
 }
 
 .publication-assets-section-heading {
@@ -165,6 +224,19 @@
 .publication-collection-chip-edit svg {
     width: 16px;
     height: 16px;
+}
+
+.publication-create-collection-option.MuiAutocomplete-option {
+    gap: 8px;
+    margin-top: 4px;
+    border-top: 1px solid #e1e5e6;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.publication-create-collection-option svg {
+    width: 18px;
+    height: 18px;
 }
 
 .publication-assets-dropzone {
@@ -204,10 +276,14 @@
 
 .publication-assets-upload-role {
     display: grid;
-    grid-template-columns: minmax(180px, 320px) auto;
+    grid-template-columns: minmax(180px, 320px) max-content;
     align-items: end;
     gap: 12px;
     margin: 16px 0;
+}
+
+.publication-assets-upload-role > .MuiButton-root {
+    justify-self: start;
 }
 
 .publication-assets-upload-role>label,
@@ -375,32 +451,50 @@
     flex: 1;
 }
 
+.publication-summary-counts,
 .publication-text-counts {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-left: auto;
+    gap: 10px;
+    margin-left: 0;
     color: #4f595f;
     font-size: 11px;
 }
 
+.publication-summary-count-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.publication-summary-count-item + .publication-summary-count-item {
+    padding-left: 10px;
+    border-left: 1px solid #d5d9dc;
+}
+
+.publication-summary-counts .MuiChip-root,
 .publication-text-counts .MuiChip-root {
     height: 28px;
     background: #f0f1f2;
 }
 
+.publication-summary-counts .MuiChip-icon,
 .publication-text-counts .MuiChip-icon {
     width: 16px;
     height: 16px;
 }
 
+.publication-summary-counts .MuiChip-label,
 .publication-text-counts .MuiChip-label {
     padding-left: 4px;
 }
 
 .publication-texts {
     display: grid;
+    width: 100%;
+    max-width: 880px;
     gap: 18px;
+    margin: 0 auto;
 }
 
 .publication-texts-editor {
@@ -474,9 +568,42 @@
     min-width: 0;
 }
 
-.publication-texts-markdown .w-md-editor {
+.publication-texts-markdown .w-md-editor.wmde-markdown-var {
+    color-scheme: light !important;
+    --color-fg-default: #24292f !important;
+    --color-fg-muted: #57606a !important;
+    --color-canvas-default: #fff !important;
+    --color-canvas-subtle: #f6f8fa !important;
+    --color-border-default: #d0d7de !important;
+    --color-border-muted: hsl(210, 18%, 87%) !important;
+    --md-editor-background-color: #fff !important;
     border: 1px solid #d5d9dc;
+    background-color: #fff !important;
     box-shadow: none;
+}
+
+.publication-texts-markdown .w-md-editor-content,
+.publication-texts-markdown .w-md-editor-input,
+.publication-texts-markdown .w-md-editor-preview,
+.publication-texts-markdown .w-md-editor-text,
+.publication-texts-markdown .w-md-editor-text-pre,
+.publication-texts-markdown .w-md-editor-preview .wmde-markdown {
+    color-scheme: light !important;
+    --color-fg-default: #24292f !important;
+    --color-canvas-default: #fff !important;
+    background-color: #fff !important;
+}
+
+.publication-texts-markdown .w-md-editor-text-pre > code,
+.publication-texts-markdown .w-md-editor-preview .wmde-markdown {
+    color: #24292f !important;
+}
+
+.publication-texts-markdown .w-md-editor-text-pre > code {
+    display: block;
+    padding: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
 }
 
 .publication-texts-markdown-loading {
@@ -554,6 +681,19 @@
         font-size: 14px;
     }
 
+    .publication-main-info-summary {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .publication-main-info-metadata {
+        max-width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .publication-summary-counts,
+    .publication-text-counts,
     .publication-assets-summary {
         margin-left: 28px;
     }

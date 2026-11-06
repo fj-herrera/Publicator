@@ -75,6 +75,18 @@ type PublicationAssetsProps = {
   completionError?: string
 }
 
+type CreateCollectionOption = {
+  id: 'create-collection'
+  name: 'Create Collection'
+}
+
+type CollectionSelectOption = Collection | CreateCollectionOption
+
+const createCollectionOption: CreateCollectionOption = {
+  id: 'create-collection',
+  name: 'Create Collection',
+}
+
 function formatUploadDate(value?: string | null) {
   if (!value) return 'Not available'
   const date = new Date(value)
@@ -186,6 +198,8 @@ function PublicationAssets({
   const availableCollections = collections.filter(
     (collection) => !deletedCollectionIds.has(collection.id),
   )
+  const isCollectionActionDisabled = busyDirectOperations > 0
+    || values.pendingUploads.some((draft) => draft.isUploading)
   const roleOptions = [...new Set([
     ...publicationRoles,
     ...values.directAssets.map((relation) => relation.role),
@@ -305,23 +319,44 @@ function PublicationAssets({
         )}
         <div className="publication-assets-section-heading">
           <h3 id="publication-collections-heading">Collections</h3>
-          <Button
-            disabled={busyDirectOperations > 0 || values.pendingUploads.some((draft) => draft.isUploading)}
-            onClick={onCreateCollection}
-            startIcon={<AddIcon />}
-            variant="outlined"
-          >
-            Create Collection
-          </Button>
         </div>
         <Autocomplete
           filterSelectedOptions
           getOptionLabel={(option) => `${option.name} (#${option.id})`}
           isOptionEqualToValue={(option, value) => option.id === value.id}
           multiple
-          onChange={(_event, next) => onValuesChange({ collectionIds: next.map(({ id }) => id) })}
-          options={availableCollections}
-          renderValue={(selected, getItemProps) => selected.map((collection, index) => {
+          getOptionDisabled={(option) => (
+            'id' in option
+            && option.id === createCollectionOption.id
+            && isCollectionActionDisabled
+          )}
+          onChange={(_event, next) => {
+            const createCollectionSelected = next.some(
+              (option) => option.id === createCollectionOption.id,
+            )
+            onValuesChange({
+              collectionIds: next
+                .filter((option): option is Collection => typeof option.id === 'number')
+                .map(({ id }) => id),
+            })
+            if (createCollectionSelected && !isCollectionActionDisabled) onCreateCollection()
+          }}
+          options={[...availableCollections, createCollectionOption] satisfies CollectionSelectOption[]}
+          renderOption={(props, option) => (
+            <li
+              {...props}
+              className={[
+                props.className,
+                option.id === createCollectionOption.id ? 'publication-create-collection-option' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              {option.id === createCollectionOption.id && <AddIcon aria-hidden="true" />}
+              {option.name}
+            </li>
+          )}
+          renderValue={(selected, getItemProps) => selected
+            .filter((option): option is Collection => typeof option.id === 'number')
+            .map((collection, index) => {
             const { key, ...itemProps } = getItemProps({ index })
             return (
               <span className="publication-collection-chip" key={key}>
@@ -354,7 +389,7 @@ function PublicationAssets({
                 </Tooltip>
               </span>
             )
-          })}
+            })}
           renderInput={(params) => <TextField {...params} label="Collections" />}
           value={selectedCollections}
         />

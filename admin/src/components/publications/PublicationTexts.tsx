@@ -222,6 +222,7 @@ function PublicationTexts({
           <div className="publication-texts-markdown" data-color-mode="light">
             <Suspense fallback={<div className="publication-texts-markdown-loading" />}>
               <MDEditor
+                data-color-mode="light"
                 height={240}
                 onChange={(next) => changeContent(next ?? '')}
                 preview="live"

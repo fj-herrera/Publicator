@@ -76,7 +76,7 @@ export type PublicationFormCatalogs = {
   clients: Pick<Client, 'id' | 'name'>[]
   contexts: Pick<Context, 'id' | 'name'>[]
   tags: Pick<Tag, 'id' | 'name'>[]
-  skillGroups: Pick<SkillGroup, 'id' | 'name'>[]
+  skillGroups: Pick<SkillGroup, 'id' | 'name' | 'description' | 'skills'>[]
   collections: Collection[]
   publicationRoles: string[]
   lastContextPosition: Record<number, number>

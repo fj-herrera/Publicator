@@ -80,26 +80,37 @@ function SkillForm({ initialSkill, submitLabel, onSubmit, onCancel }: SkillFormP
 
   return (
     <form className="skill-form" onSubmit={handleSubmit}>
-      <label className="skill-icon-picker">
-        <input
-          className="skill-icon-file-input"
-          type="file"
-          accept="image/svg+xml,.svg"
-          onChange={handleIconChange}
-        />
-        <AddPhotoAlternateIcon className="skill-icon-picker-symbol" aria-hidden="true" />
-        <span><span className="skill-icon-picker-link">Open</span> or drag and drop</span>
-        <span className="skill-icon-picker-hint">SVG ONLY</span>
-      </label>
-      {error && <Alert className="skill-form-error" severity="error">{error}</Alert>}
-      <div className="skill-preview">
-        <span className="skill-preview-label">Skill Preview</span>
-        <Chip
-          className="skill-preview-chip"
-          variant="outlined"
-          icon={iconPreview ? <img src={iconPreview} alt="" /> : undefined}
-          label={name.trim() || 'Skill'}
-        />
+      <div className="skill-form-icon-fields">
+        <label className="skill-icon-picker">
+          <input
+            className="skill-icon-file-input"
+            type="file"
+            accept="image/svg+xml,.svg"
+            onChange={handleIconChange}
+          />
+          <AddPhotoAlternateIcon className="skill-icon-picker-symbol" aria-hidden="true" />
+          <span><span className="skill-icon-picker-link">Open</span> or drag and drop</span>
+          <span className="skill-icon-picker-hint">SVG ONLY</span>
+        </label>
+        <div className="skill-preview">
+          <span className="skill-preview-label">Skill Preview</span>
+          <Chip
+            className="skill-preview-chip"
+            variant="outlined"
+            icon={iconPreview ? <img src={iconPreview} alt="" /> : undefined}
+            label={name.trim() || 'Skill'}
+          />
+          {iconPreview && (
+            <Button
+              className="skill-form-remove-icon"
+              type="button"
+              onClick={handleRemoveIcon}
+              disabled={isSaving}
+            >
+              Remove icon
+            </Button>
+          )}
+        </div>
       </div>
       <TextField
         className="skill-form-name"
@@ -129,16 +140,7 @@ function SkillForm({ initialSkill, submitLabel, onSubmit, onCancel }: SkillFormP
           Cancel
         </Button>
       </div>
-      {iconPreview && (
-        <Button
-          className="skill-form-remove-icon"
-          type="button"
-          onClick={handleRemoveIcon}
-          disabled={isSaving}
-        >
-          Remove icon
-        </Button>
-      )}
+      {error && <Alert className="skill-form-error" severity="error">{error}</Alert>}
     </form>
   )
 }

@@ -150,7 +150,7 @@ export function syncContextDrafts(
 
 export function buildPublicationFormData(
   data: PublicationListData,
-  skillGroups: Pick<SkillGroup, 'id' | 'name'>[],
+  skillGroups: Pick<SkillGroup, 'id' | 'name' | 'description' | 'skills'>[],
   publicationId: number | null,
   assets: Asset[] = [],
   textContents: PublicationTextRecord[] = [],

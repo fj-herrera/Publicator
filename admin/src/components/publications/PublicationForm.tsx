@@ -9,9 +9,14 @@ import {
 import CheckIcon from '@mui/icons-material/Check'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CloseIcon from '@mui/icons-material/Close'
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined'
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined'
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined'
+import WorkIcon from '@mui/icons-material/Work'
 import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getErrorMessage } from '../../services/api-error'
@@ -82,16 +87,11 @@ function PublicationForm({
       : JSON.stringify(data.initialValues.mainInfo),
   )
   const mainInfo = form.values.mainInfo
-  const mainInfoSummary = [
-    mainInfo.title.trim(),
-    mainInfo.slug.trim(),
-    data.catalogs.types.find((item) => item.id === mainInfo.typeId)?.name,
-    mainInfo.contexts
-      .map((item) => data.catalogs.contexts.find((context) => context.id === item.contextId)?.name)
-      .filter((name): name is string => Boolean(name))
-      .join(', '),
-    data.catalogs.clients.find((item) => item.id === mainInfo.clientId)?.name,
-  ].filter(Boolean).join(' · ')
+  const mainInfoType = data.catalogs.types.find((item) => item.id === mainInfo.typeId)?.name
+  const mainInfoContexts = mainInfo.contexts
+    .map((item) => data.catalogs.contexts.find((context) => context.id === item.contextId)?.name)
+    .filter((name): name is string => Boolean(name))
+  const mainInfoClient = data.catalogs.clients.find((item) => item.id === mainInfo.clientId)?.name
   const sectionComplete = {
     mainInfo: form.isSectionComplete('mainInfo') && !mainInfoSaveError,
     assets: form.isSectionComplete('assets'),
@@ -366,30 +366,67 @@ function PublicationForm({
             </span>
             <span className="publication-form-section-title">{sectionLabels[section]}</span>
             {section === 'mainInfo' && (
-              <span className="publication-form-section-summary">
-                {mainInfoSummary || 'New publication'}
+              <span className="publication-form-section-summary publication-main-info-summary">
+                <span className="publication-main-info-title">
+                  {mainInfo.title.trim() || 'New publication'}
+                </span>
+                <span className="publication-main-info-metadata">
+                  {mainInfoType && (
+                    <span><BookmarkBorderIcon aria-hidden="true" />{mainInfoType}</span>
+                  )}
+                  {mainInfoContexts.length > 0 && (
+                    <span><BusinessOutlinedIcon aria-hidden="true" />{mainInfoContexts.join(', ')}</span>
+                  )}
+                  {mainInfoClient && (
+                    <span><WorkIcon aria-hidden="true" />{mainInfoClient}</span>
+                  )}
+                  <Chip
+                    className="publication-main-info-tag-count"
+                    icon={<LocalOfferOutlinedIcon />}
+                    label={mainInfo.tagIds.length}
+                    size="small"
+                  />
+                </span>
               </span>
             )}
             {section === 'assets' && (
-              <span className="publication-form-section-summary publication-assets-summary">
-                <span>Collections {form.values.assets.collectionIds.length}</span>
-                <span>Direct Assets {form.values.assets.directAssets.length}</span>
+              <span className="publication-summary-counts publication-assets-summary">
+                <span className="publication-summary-count-item">
+                  <span>Collections</span>
+                  <Chip
+                    icon={<LayersOutlinedIcon />}
+                    label={form.values.assets.collectionIds.length}
+                    size="small"
+                  />
+                </span>
+                <span className="publication-summary-count-item">
+                  <span>Assets</span>
+                  <Chip
+                    icon={<ImageOutlinedIcon />}
+                    label={form.values.assets.directAssets.length}
+                    size="small"
+                  />
+                </span>
               </span>
             )}
             {section === 'texts' && (
               <span className="publication-text-counts">
-                <span>Plain Texts</span>
-                <Chip
-                  icon={<LayersOutlinedIcon />}
-                  label={form.values.texts.associations.filter((item) => item.text?.format === 'PLAIN').length}
-                  size="small"
-                />
-                <span>MD Texts</span>
-                <Chip
-                  icon={<DescriptionOutlinedIcon />}
-                  label={form.values.texts.associations.filter((item) => item.text?.format === 'MD').length}
-                  size="small"
-                />
+                <span className="publication-summary-count-item">
+                  <span>Plain Texts</span>
+                  <Chip
+                    icon={<LayersOutlinedIcon />}
+                    label={form.values.texts.associations.filter((item) => item.text?.format === 'PLAIN').length}
+                    size="small"
+                  />
+                </span>
+                <span className="publication-summary-count-item">
+                  <span>MD Texts</span>
+                  <Chip
+                    icon={<DescriptionOutlinedIcon />}
+                    label={form.values.texts.associations.filter((item) => item.text?.format === 'MD').length}
+                    size="small"
+                  />
+                </span>
               </span>
             )}
           </AccordionSummary>

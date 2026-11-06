@@ -8,6 +8,14 @@
     vertical-align: middle;
 }
 
+.skill-group-data-grid .data-grid .MuiTableCell-root {
+    border-right: 1px solid #e1e5e6;
+}
+
+.skill-group-data-grid .data-grid .MuiTableCell-root:last-child {
+    border-right: 0;
+}
+
 .skill-group-data-grid .skill-group-name-column {
     width: 280px;
     min-width: 240px;
@@ -47,6 +55,7 @@
     flex-wrap: wrap;
     gap: 10px;
     padding: 0;
+    background-color: transparent;
     border: 0;
 }
 

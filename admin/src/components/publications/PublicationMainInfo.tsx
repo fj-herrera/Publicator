@@ -7,7 +7,7 @@ import type {
 } from '../../entities/publication-form'
 import './publication-form.css'
 
-type Option = { id: number; name: string }
+type Option = { id: number; name: string; description?: string | null }
 
 type MultiSelectProps = {
   label: string
@@ -53,6 +53,18 @@ function MultiSelect({
       multiple
       onChange={(_event, next) => onChange(next.map((option) => option.id))}
       options={options}
+      renderOption={(props, option) => (
+        <li {...props}>
+          <span className="publication-autocomplete-option">
+            <span>{option.name}</span>
+            {option.description && (
+              <span className="publication-autocomplete-option-description">
+                {option.description}
+              </span>
+            )}
+          </span>
+        </li>
+      )}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -158,7 +170,11 @@ function PublicationMainInfo({
         <MultiSelect
           label="Skill Groups"
           onChange={(skillGroupIds) => onChange({ skillGroupIds })}
-          options={catalogs.skillGroups}
+          options={catalogs.skillGroups.map((group) => ({
+            ...group,
+            description: group.description?.trim()
+              || group.skills.map((skill) => skill.name).join(', '),
+          }))}
           selectedIds={values.skillGroupIds}
           variant="outlined"
         />

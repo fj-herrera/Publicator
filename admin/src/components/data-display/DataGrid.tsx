@@ -36,10 +36,12 @@ function DataGrid<Row extends { id: number | string }>({
     page: 0,
     rowsPerPage: rowsPerPageOptions[0],
   })
-  const { page, rowsPerPage } = pagination
-  if (rows.length < 20 && rowsPerPage === 20) {
-    setPagination({ page: 0, rowsPerPage: rowsPerPageOptions[0] })
-  }
+  const rowsPerPage = rows.length < 20 && pagination.rowsPerPage === 20
+    ? rowsPerPageOptions[0]
+    : pagination.rowsPerPage
+  const lastPage = Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1)
+  const page = Math.min(pagination.page, lastPage)
+
   const availableRowsPerPageOptions = rows.length >= 20
     ? rowsPerPageOptions
     : [rowsPerPageOptions[0]]
@@ -116,7 +118,7 @@ function DataGrid<Row extends { id: number | string }>({
           count={rows.length}
           page={page}
           onPageChange={(_event, nextPage) => {
-            setPagination((current) => ({ ...current, page: nextPage }))
+            setPagination({ page: nextPage, rowsPerPage })
           }}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(event) => {

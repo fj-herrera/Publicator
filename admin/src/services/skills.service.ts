@@ -1,71 +1,35 @@
 import type { Skill, SkillInput } from '../entities/skill'
 import { apiMessages } from '../constants/api-messages'
-import { getApiError } from './api-error'
+import { jsonRequest, requestJson, requestVoid } from './api-request'
 
 export async function uploadSkillIcon(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await fetch('/api/media/skills', {
+  const result = await requestJson<{ url: string }>('/api/media/skills', apiMessages.skills.uploadIconFailed, {
     method: 'POST',
     body: formData,
   })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.skills.uploadIconFailed)
-  }
-
-  const result = await response.json() as { url: string }
   return result.url
 }
 
 export async function getSkills(): Promise<Skill[]> {
-  const response = await fetch('/api/skills')
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.skills.loadFailed)
-  }
-
-  return await response.json() as Skill[]
+  return requestJson('/api/skills', apiMessages.skills.loadFailed)
 }
 
 export async function createSkillRequest(
   skill: SkillInput,
 ): Promise<Omit<Skill, 'inSkillGroups'>> {
-  const response = await fetch('/api/skills', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(skill),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.skills.createFailed)
-  }
-
-  return await response.json() as Omit<Skill, 'inSkillGroups'>
+  return requestJson('/api/skills', apiMessages.skills.createFailed, jsonRequest('POST', skill))
 }
 
 export async function updateSkillRequest(
   id: number,
   skill: SkillInput,
 ): Promise<Omit<Skill, 'inSkillGroups'>> {
-  const response = await fetch(`/api/skills/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(skill),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.skills.updateFailed)
-  }
-
-  return await response.json() as Omit<Skill, 'inSkillGroups'>
+  return requestJson(`/api/skills/${id}`, apiMessages.skills.updateFailed, jsonRequest('PATCH', skill))
 }
 
 export async function deleteSkillRequest(id: number): Promise<void> {
-  const response = await fetch(`/api/skills/${id}`, { method: 'DELETE' })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.skills.deleteFailed)
-  }
+  return requestVoid(`/api/skills/${id}`, apiMessages.skills.deleteFailed, { method: 'DELETE' })
 }

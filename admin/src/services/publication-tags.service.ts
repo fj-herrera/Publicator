@@ -1,54 +1,24 @@
 import type { Tag } from '../entities/tag'
 import { apiMessages } from '../constants/api-messages'
-import { getApiError } from './api-error'
+import { jsonRequest, requestJson, requestVoid } from './api-request'
 
 export async function getPublicationTags(): Promise<Tag[]> {
-  const response = await fetch('/api/tags')
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.tags.loadFailed)
-  }
-
-  return await response.json() as Tag[]
+  return requestJson('/api/tags', apiMessages.tags.loadFailed)
 }
 
 export async function createPublicationTag(
   name: string,
 ): Promise<Omit<Tag, 'inPublications'>> {
-  const response = await fetch('/api/tags', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.tags.createFailed)
-  }
-
-  return await response.json() as Omit<Tag, 'inPublications'>
+  return requestJson('/api/tags', apiMessages.tags.createFailed, jsonRequest('POST', { name }))
 }
 
 export async function updatePublicationTag(
   id: number,
   name: string,
 ): Promise<Omit<Tag, 'inPublications'>> {
-  const response = await fetch(`/api/tags/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.tags.updateFailed)
-  }
-
-  return await response.json() as Omit<Tag, 'inPublications'>
+  return requestJson(`/api/tags/${id}`, apiMessages.tags.updateFailed, jsonRequest('PATCH', { name }))
 }
 
 export async function deletePublicationTag(id: number): Promise<void> {
-  const response = await fetch(`/api/tags/${id}`, { method: 'DELETE' })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.tags.deleteFailed)
-  }
+  return requestVoid(`/api/tags/${id}`, apiMessages.tags.deleteFailed, { method: 'DELETE' })
 }

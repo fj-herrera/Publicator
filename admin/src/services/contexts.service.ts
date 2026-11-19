@@ -1,54 +1,24 @@
 import type { Context } from '../entities/context'
 import { apiMessages } from '../constants/api-messages'
-import { getApiError } from './api-error'
+import { jsonRequest, requestJson, requestVoid } from './api-request'
 
 export async function getContexts(): Promise<Context[]> {
-  const response = await fetch('/api/contexts')
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.contexts.loadFailed)
-  }
-
-  return await response.json() as Context[]
+  return requestJson('/api/contexts', apiMessages.contexts.loadFailed)
 }
 
 export async function createContextRequest(
   name: string,
 ): Promise<Omit<Context, 'inPublications'>> {
-  const response = await fetch('/api/contexts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.contexts.createFailed)
-  }
-
-  return await response.json() as Omit<Context, 'inPublications'>
+  return requestJson('/api/contexts', apiMessages.contexts.createFailed, jsonRequest('POST', { name }))
 }
 
 export async function updateContextRequest(
   id: number,
   name: string,
 ): Promise<Omit<Context, 'inPublications'>> {
-  const response = await fetch(`/api/contexts/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.contexts.updateFailed)
-  }
-
-  return await response.json() as Omit<Context, 'inPublications'>
+  return requestJson(`/api/contexts/${id}`, apiMessages.contexts.updateFailed, jsonRequest('PATCH', { name }))
 }
 
 export async function deleteContextRequest(id: number): Promise<void> {
-  const response = await fetch(`/api/contexts/${id}`, { method: 'DELETE' })
-
-  if (!response.ok) {
-    throw await getApiError(response, apiMessages.contexts.deleteFailed)
-  }
+  return requestVoid(`/api/contexts/${id}`, apiMessages.contexts.deleteFailed, { method: 'DELETE' })
 }

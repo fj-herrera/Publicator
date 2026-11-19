@@ -117,6 +117,8 @@ function PublicationForm({
     setMainInfoSaveError('')
     // Collected as writes are confirmed so a partial save still refreshes what changed.
     const written = new Set<ResourceName>()
+    const completed: string[] = []
+    let step = 'Metadata'
     try {
       let nextMetaId = metaIdRef.current
       const metaInput = {
@@ -139,7 +141,9 @@ function PublicationForm({
         await updateMetaRequest(nextMetaId, metaInput)
         written.add('publications')
       }
+      completed.push(`Metadata #${nextMetaId} saved`)
 
+      step = 'Publication'
       let nextPublicationId = publicationIdRef.current
       if (nextPublicationId === null) {
         const createdPublication = await createPublicationRequest(mainInfo.typeId, nextMetaId)
@@ -151,7 +155,9 @@ function PublicationForm({
         await updatePublicationRequest(nextPublicationId, mainInfo.typeId)
         written.add('publications')
       }
+      completed.push(`Publication #${nextPublicationId} saved`)
 
+      step = 'Loading current associations'
       const currentRelations = await getMainInfoRelations()
       const currentContexts = currentRelations.contexts.filter(
         (item) => item.publication.id === nextPublicationId,
@@ -159,8 +165,10 @@ function PublicationForm({
       const selectedContextIds = new Set(mainInfo.contexts.map((item) => item.contextId))
       for (const relation of currentContexts) {
         if (!selectedContextIds.has(relation.context.id)) {
+          step = `Removing context #${relation.context.id}`
           await deletePublicationContextRequest(relation.id)
           written.add('publicationContexts')
+          completed.push(`Context #${relation.context.id} removed`)
         }
       }
 
@@ -174,6 +182,7 @@ function PublicationForm({
       for (const contextId of selectedContextIds) {
         if (currentContexts.some((item) => item.context.id === contextId)) continue
         const position = (lastPositions.get(contextId) ?? 0) + 1
+        step = `Adding context #${contextId}`
         const created = await createPublicationContextRequest({
           publicationId: nextPublicationId,
           contextId,
@@ -182,6 +191,7 @@ function PublicationForm({
           featured: false,
         })
         written.add('publicationContexts')
+        completed.push(`Context #${contextId} added`)
         lastPositions.set(contextId, created.position)
       }
 
@@ -191,14 +201,18 @@ function PublicationForm({
       const selectedTagIds = new Set(mainInfo.tagIds)
       for (const relation of currentTags) {
         if (!selectedTagIds.has(relation.tag.id)) {
+          step = `Removing tag #${relation.tag.id}`
           await deletePublicationTagRequest(relation.id)
           written.add('publicationTags')
+          completed.push(`Tag #${relation.tag.id} removed`)
         }
       }
       for (const tagId of selectedTagIds) {
         if (!currentTags.some((item) => item.tag.id === tagId)) {
+          step = `Adding tag #${tagId}`
           await createPublicationTagRequest(nextPublicationId, tagId)
           written.add('publicationTags')
+          completed.push(`Tag #${tagId} added`)
         }
       }
 
@@ -208,21 +222,29 @@ function PublicationForm({
       const selectedSkillGroupIds = new Set(mainInfo.skillGroupIds)
       for (const relation of currentSkillGroups) {
         if (!selectedSkillGroupIds.has(relation.skillGroup.id)) {
+          step = `Removing skill group #${relation.skillGroup.id}`
           await deletePublicationSkillGroupRequest(relation.id)
           written.add('publicationSkillGroups')
+          completed.push(`Skill group #${relation.skillGroup.id} removed`)
         }
       }
       for (const skillGroupId of selectedSkillGroupIds) {
         if (!currentSkillGroups.some((item) => item.skillGroup.id === skillGroupId)) {
+          step = `Adding skill group #${skillGroupId}`
           await createPublicationSkillGroupRequest(nextPublicationId, skillGroupId)
           written.add('publicationSkillGroups')
+          completed.push(`Skill group #${skillGroupId} added`)
         }
       }
 
       savedMainInfoSnapshot.current = snapshot
       return true
     } catch (saveError) {
-      setMainInfoSaveError(getErrorMessage(saveError, 'Could not save Main Info.'))
+      setMainInfoSaveError(
+        `${completed.length ? `Completed: ${completed.join('; ')}. ` : 'No writes confirmed. '}`
+        + `${step} failed: ${getErrorMessage(saveError, 'Could not save Main Info.')} `
+        + 'Retry to continue; existing associations will be checked.',
+      )
       return false
     } finally {
       if (written.size > 0) invalidate(...written)

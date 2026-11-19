@@ -128,7 +128,9 @@ function usePublicationForm(
     ...current,
     assets: {
       ...current.assets,
-      directAssets: [...current.assets.directAssets, asset],
+      directAssets: current.assets.directAssets.some((item) => item.id === asset.id)
+        ? current.assets.directAssets.map((item) => (item.id === asset.id ? asset : item))
+        : [...current.assets.directAssets, asset],
     },
   }))
 

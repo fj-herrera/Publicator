@@ -42,14 +42,18 @@ function PublicationDirectAssetEditDialog({
     setError('')
     let nextRelation = relation
     const written = new Set<ResourceName>()
+    const completed: string[] = []
+    let step = 'Updating the asset name'
     try {
       if (nextName !== (relation.asset.name ?? '').trim()) {
         const asset = await updateAssetName(relation.asset.id, nextName)
         written.add('assets')
         nextRelation = { ...nextRelation, asset: { ...relation.asset, ...asset } }
         onSaved(nextRelation)
+        completed.push('Asset name saved')
       }
       if (nextRole !== relation.role) {
+        step = 'Updating the asset role'
         await updatePublicationAssetRole(relation.id, nextRole)
         written.add('publicationAssets')
         nextRelation = { ...nextRelation, role: nextRole }
@@ -57,7 +61,10 @@ function PublicationDirectAssetEditDialog({
       }
       onClose()
     } catch (saveError) {
-      setError(getErrorMessage(saveError, 'Could not update this asset.'))
+      setError(
+        `${completed.length ? `Completed: ${completed.join('; ')}. ` : 'No changes confirmed. '}`
+        + `${step} failed: ${getErrorMessage(saveError, 'Could not update this asset.')} Retry to continue.`,
+      )
     } finally {
       if (written.size > 0) invalidate(...written)
       setIsSaving(false)

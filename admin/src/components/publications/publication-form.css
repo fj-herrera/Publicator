@@ -305,8 +305,12 @@
 
 .publication-assets-upload-list li {
     display: grid;
-    grid-template-columns: 20px minmax(120px, 1fr) auto auto minmax(0, 2fr) auto;
-    align-items: center;
+    grid-template-columns: 20px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+        "icon name size actions"
+        ". status status actions"
+        ". error error actions";
+    align-items: start;
     gap: 8px;
     min-height: 40px;
     padding: 4px 8px;
@@ -316,14 +320,36 @@
 }
 
 .publication-assets-upload-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    grid-area: name;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.publication-assets-upload-icon {
+    grid-area: icon;
+}
+
+.publication-assets-upload-size {
+    grid-area: size;
+}
+
+.publication-assets-upload-status {
+    grid-area: status;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.publication-assets-upload-error {
+    grid-area: error;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .publication-assets-upload-actions {
+    grid-area: actions;
     display: flex;
     align-items: center;
+    align-self: center;
     gap: 4px;
 }
 
@@ -712,11 +738,16 @@
     }
 
     .publication-assets-upload-list li {
-        grid-template-columns: 20px minmax(0, 1fr) auto;
+        grid-template-columns: 20px minmax(0, 1fr);
+        grid-template-areas:
+            "icon name"
+            ". size"
+            ". status"
+            ". error"
+            ". actions";
     }
 
     .publication-assets-upload-actions {
-        grid-column: 2 / -1;
         justify-content: flex-end;
     }
 

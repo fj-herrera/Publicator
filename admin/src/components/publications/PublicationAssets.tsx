@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Autocomplete,
   Alert,
@@ -40,6 +40,7 @@ import { deleteCollectionRequest } from '../../services/collections.service'
 import { deletePublicationAssetRequest } from '../../services/publication-form.service'
 import {
   createPublicationAsset,
+  getPublicationAssets,
   updatePublicationAssetRole,
   uploadAssets,
 } from '../../services/assets.service'
@@ -189,6 +190,7 @@ function PublicationAssets({
   const [collectionDeleteError, setCollectionDeleteError] = useState('')
   const [collectionDeleteSuccess, setCollectionDeleteSuccess] = useState('')
   const [deletedCollectionIds, setDeletedCollectionIds] = useState<Set<number>>(() => new Set())
+  const uploadsInProgress = useRef(new Set<number>())
 
   const selectedCollections = values.collectionIds
     .map((id) => collections.find((collection) => collection.id === id))
@@ -236,6 +238,9 @@ function PublicationAssets({
   }
 
   const submitUpload = async (draft: DirectAssetUploadDraft, role: string) => {
+    if (uploadsInProgress.current.has(draft.key)) return
+    // Keep the original role when checking an association whose response may have been lost.
+    if (draft.asset) role = draft.role
     const trimmedRole = role.trim()
     if (!trimmedRole || trimmedRole.length > 50) {
       onPendingUploadChange(draft.key, {
@@ -245,10 +250,21 @@ function PublicationAssets({
       return
     }
 
+    uploadsInProgress.current.add(draft.key)
     onPendingUploadChange(draft.key, { role: trimmedRole, error: '', isUploading: true })
     let asset: Asset | null = draft.asset
     const written = new Set<ResourceName>()
+    let stage = asset ? 'Checking the existing association' : 'Uploading the file'
     try {
+      let existingRelation = null
+      if (asset) {
+        const relations = await getPublicationAssets()
+        existingRelation = relations.find((relation) => (
+          relation.asset.id === asset?.id
+          && relation.publication.id === publicationId
+          && relation.role === trimmedRole
+        )) ?? null
+      }
       if (!asset) {
         const uploaded = await uploadAssets([draft.file])
         if (uploaded.length > 0) written.add('assets')
@@ -257,7 +273,8 @@ function PublicationAssets({
         onPendingUploadChange(draft.key, { asset })
       }
 
-      const created = await createPublicationAsset(asset.id, publicationId, trimmedRole) as {
+      stage = 'Associating the uploaded file'
+      const created = existingRelation ?? await createPublicationAsset(asset.id, publicationId, trimmedRole) as {
         id: number
         role: string
         publication: { id: number }
@@ -270,10 +287,11 @@ function PublicationAssets({
       onPendingUploadChange(draft.key, {
         role: trimmedRole,
         asset,
-        error: getErrorMessage(uploadError, 'Could not upload or associate this file.'),
+        error: `${stage} failed: ${getErrorMessage(uploadError, 'Could not complete this operation.')}`,
         isUploading: false,
       })
     } finally {
+      uploadsInProgress.current.delete(draft.key)
       if (written.size > 0) invalidate(...written)
     }
   }
@@ -486,11 +504,16 @@ function PublicationAssets({
           <ul className="publication-assets-upload-list" aria-label="Files queued for direct upload">
             {values.pendingUploads.map((draft) => (
               <li key={draft.key}>
-                <InsertDriveFileOutlinedIcon aria-hidden="true" />
+                <InsertDriveFileOutlinedIcon aria-hidden="true" className="publication-assets-upload-icon" />
                 <span className="publication-assets-upload-name" title={draft.file.name}>{draft.file.name}</span>
-                <span>{formatFileSize(draft.file.size)}</span>
-                {draft.asset && <span>Uploaded, association pending</span>}
-                {draft.error && <span className="publication-assets-error" role="alert">{draft.error}</span>}
+                <span className="publication-assets-upload-size">{formatFileSize(draft.file.size)}</span>
+                {draft.asset && (
+                  <span className="publication-assets-upload-status">
+                    Uploaded to the gallery (asset #{draft.asset.id}); association not confirmed.
+                    Retry checks for an existing association without uploading again.
+                  </span>
+                )}
+                {draft.error && <span className="publication-assets-error publication-assets-upload-error" role="alert">{draft.error}</span>}
                 <div className="publication-assets-upload-actions">
                   {draft.error && (
                     <Button disabled={draft.isUploading} onClick={() => void submitUpload(draft, values.uploadRole)} size="small">
@@ -620,7 +643,10 @@ function PublicationAssets({
       {editingAsset && (
         <PublicationDirectAssetEditDialog
           onClose={() => setEditingAsset(null)}
-          onSaved={(relation) => onDirectAssetChange(relation.id, relation)}
+          onSaved={(relation) => {
+            setEditingAsset(relation)
+            onDirectAssetChange(relation.id, relation)
+          }}
           relation={editingAsset}
           roles={roleOptions}
         />

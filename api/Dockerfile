@@ -18,7 +18,8 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev \
+RUN npm ci --omit=dev --include=optional \
+    && node -e "require('sharp')" \
     && mkdir -p /app/media \
     && chown node:node /app/media
 
